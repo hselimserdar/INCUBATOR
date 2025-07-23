@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.2*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.3*/
 
 #include "Nextion.h"
 #include "SDL_Arduino_INA3221.h"
@@ -299,6 +299,7 @@ int s2; //su seviyesi 2
 int s3; //su seviyesi 3
 int s4; //su seviyesi 4
 int fanspeed;
+int fanspeedanalog;
 int termistor1analog;
 int termistor2analog;
 int termistor3analog;
@@ -364,7 +365,7 @@ float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
 String pcbsurum = "V3.2";
-String yazilimsurum = "V3.2.2";
+String yazilimsurum = "V3.2.3";
 byte akusarjcurr;
 float setcurrentA;
 float setcurrentMA;
@@ -799,7 +800,8 @@ void loop()
     akuvrefresh = zaman;
   }
 
-  analogWrite(FANHIZI, fanspeed);
+  fanspeedanalog = map(fanspeed, 0, 100, 0, 255);
+  analogWrite(FANHIZI, fanspeedanalog);
 
   if (akuvolt > akusarjvoltaji && GUCTIPI == 1 && AKUVARMI == 1) {
     digitalWrite (CH6, LOW);
