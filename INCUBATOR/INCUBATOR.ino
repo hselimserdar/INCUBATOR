@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.1*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.1.5*/
 
 #include "Nextion.h"
 #include "SDL_Arduino_INA3221.h"
@@ -83,13 +83,19 @@ NexButton b26 = NexButton(4, 6, "b26");
 NexButton b27 = NexButton(2, 24, "b27");
 NexButton b28 = NexButton(2, 25, "b28");
 NexButton b29 = NexButton(2, 28, "b29");
-NexButton b30 = NexButton(5, 9, "b30");
-NexButton b31 = NexButton(5, 10, "b31");
-NexButton b32 = NexButton(5, 13, "b32");
+NexButton b30 = NexButton(5, 6, "b30");
+NexButton b31 = NexButton(5, 7, "b31");
+NexButton b32 = NexButton(5, 10, "b32");
 NexButton b33 = NexButton(11, 3, "b33");
 NexButton b34 = NexButton(11, 4, "b34");
-NexButton b35 = NexButton(5, 15, "b35");
-NexButton b36 = NexButton(5, 16, "b36");
+NexButton b35 = NexButton(5, 12, "b35");
+NexButton b36 = NexButton(5, 13, "b36");
+NexPicture pb1 = NexPicture(5, 17, "pb1");
+NexPicture pb2 = NexPicture(5, 18, "pb2");
+NexPicture pb3 = NexPicture(5, 19, "pb3");
+NexPicture pb4 = NexPicture(5, 20, "pb4");
+NexPicture pb5 = NexPicture(5, 21, "pb5");
+NexPicture pb6 = NexPicture(5, 22, "pb6");
 NexButton b1en = NexButton(7, 3, "b1en");
 NexButton b2en = NexButton(7, 6, "b2en");
 NexButton b3en = NexButton(7, 7, "b3en");
@@ -118,22 +124,21 @@ NexButton b25en = NexButton(9, 5, "b25en");
 NexButton b26en = NexButton(9, 6, "b26en");
 NexButton b27en = NexButton(7, 24, "b27en");
 NexButton b28en = NexButton(7, 25, "b28en");
-NexButton b29en = NexButton(7, 28, "b29en");
-NexButton b30en = NexButton(10, 9, "b30en");
-NexButton b31en = NexButton(10, 10, "b31en");
-NexButton b32en = NexButton(10, 13, "b32en");
+NexButton b30en = NexButton(10, 14, "b30en");
+NexButton b31en = NexButton(10, 11, "b31en");
+NexButton b32en = NexButton(10, 10, "b32en");
 NexButton b33en = NexButton(12, 4, "b33en");
 NexButton b34en = NexButton(12, 3, "b34en");
-NexButton b35en = NexButton(10, 16, "b35en");
-NexButton b36en = NexButton(10, 17, "b36en");
-NexDSButton bt1 = NexDSButton(5, 4, "bt1");
-NexDSButton bt2 = NexDSButton(5, 6, "bt2");
-NexDSButton bt3 = NexDSButton(5, 8, "bt3");
-NexDSButton bt1en = NexDSButton(10, 4, "bt1en");
-NexDSButton bt2en = NexDSButton(10, 6, "bt2en");
-NexDSButton bt3en = NexDSButton(10, 8, "bt3en");
+NexButton b35en = NexButton(10, 13, "b35en");
+NexButton b36en = NexButton(10, 14, "b36en");
+NexPicture pb1en = NexPicture(10, 17, "pb1en");
+NexPicture pb2en = NexPicture(10, 18, "pb2en");
+NexPicture pb3en = NexPicture(10, 19, "pb3en");
+NexPicture pb4en = NexPicture(10, 20, "pb4en");
+NexPicture pb5en = NexPicture(10, 21, "pb5en");
+NexPicture pb6en = NexPicture(10, 22, "pb6en");
 
-NexTouch *nex_listen_list[] =
+NexTouch * nex_listen_list[] =
 {
   &b1,
   &b2,
@@ -171,6 +176,12 @@ NexTouch *nex_listen_list[] =
   &b34,
   &b35,
   &b36,
+  &pb1,
+  &pb2,
+  &pb3,
+  &pb4,
+  &pb5,
+  &pb6,
   &b1en,
   &b2en,
   &b3en,
@@ -199,7 +210,6 @@ NexTouch *nex_listen_list[] =
   &b26en,
   &b27en,
   &b28en,
-  &b29en,
   &b30en,
   &b31en,
   &b32en,
@@ -207,12 +217,12 @@ NexTouch *nex_listen_list[] =
   &b34en,
   &b35en,
   &b36en,
-  &bt1,
-  &bt2,
-  &bt3,
-  &bt1en,
-  &bt2en,
-  &bt3en,
+  &pb1en,
+  &pb2en,
+  &pb3en,
+  &pb4en,
+  &pb5en,
+  &pb6en,
   NULL
 };
 
@@ -298,14 +308,15 @@ byte AKUVARMI; //Akünün kullanılıp kullanılmayacağını saklayan değişke
 byte SUSEVIYEBUZZER; //Su seviyesi alarmının kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
 byte SUSEVIYEGOSTERGESI; //Su seviyesi göstergesinin kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
 int CEVIRMEDGUNSAYISI; //Maksimum yumurta çevirme gün sayısı
-byte EkranYenileme1 = 0;
-byte EkranYenileme2 = 0;
-byte EkranYenileme3 = 0;
-byte EkranYenileme4 = 0;
-int EkranYenileme5 = 0;
+unsigned long EkranYenileme1 = 0;
+unsigned long EkranYenileme2 = 0;
+unsigned long EkranYenileme3 = 0;
+unsigned long EkranYenileme4 = 0;
+unsigned long EkranYenileme5 = 0;
+unsigned long sensetiming = 0;
+unsigned long pbswitchdelay = 0;
 int pidtiming = 0;
 int pidpwm = 255;
-int setcurrentMA;
 int hata = 0;
 int MID;
 char nextion_array[3] = {0xFF, 0xFF, 0xFF};
@@ -325,9 +336,10 @@ float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
 String pcbsurum = "V3.2";
-String yazilimsurum = "V3.1.3";
-int akusarjcurr;
+String yazilimsurum = "V3.1.5";
+byte akusarjcurr;
 float setcurrentA;
+float setcurrentMA;
 int millissaniye;
 int millisdakika;
 int millissaat;
@@ -391,7 +403,6 @@ void setup()
   b26.attachPush(b26PushCallback, &b26);
   b27.attachPush(b27PushCallback, &b27);
   b28.attachPush(b28PushCallback, &b28);
-  b29.attachPush(b29PushCallback, &b29);
   b30.attachPush(b30PushCallback, &b30);
   b31.attachPush(b31PushCallback, &b31);
   b32.attachPush(b32PushCallback, &b32);
@@ -399,6 +410,12 @@ void setup()
   b34.attachPush(b34PushCallback, &b34);
   b35.attachPush(b35PushCallback, &b35);
   b36.attachPush(b36PushCallback, &b36);
+  pb1.attachPush(pb1PushCallback, &pb1);
+  pb2.attachPush(pb2PushCallback, &pb2);
+  pb3.attachPush(pb3PushCallback, &pb3);
+  pb4.attachPush(pb4PushCallback, &pb4);
+  pb5.attachPush(pb5PushCallback, &pb5);
+  pb6.attachPush(pb6PushCallback, &pb6);
   b1en.attachPop(b1enPopCallback, &b1en);
   b2en.attachPush(b2enPushCallback, &b2en);
   b3en.attachPush(b3enPushCallback, &b3en);
@@ -427,7 +444,6 @@ void setup()
   b26en.attachPush(b26enPushCallback, &b26en);
   b27en.attachPush(b27enPushCallback, &b27en);
   b28en.attachPush(b28enPushCallback, &b28en);
-  b29en.attachPush(b29enPushCallback, &b29en);
   b30en.attachPush(b30enPushCallback, &b30en);
   b31en.attachPush(b31enPushCallback, &b31en);
   b32en.attachPush(b32enPushCallback, &b32en);
@@ -435,12 +451,12 @@ void setup()
   b34en.attachPush(b34enPushCallback, &b34en);
   b35en.attachPush(b35enPushCallback, &b35en);
   b36en.attachPush(b36enPushCallback, &b36en);
-  bt1.attachPop(bt1PopCallback, &bt1);
-  bt2.attachPop(bt2PopCallback, &bt2);
-  bt3.attachPop(bt3PopCallback, &bt3);
-  bt1en.attachPop(bt1enPopCallback, &bt1en);
-  bt2en.attachPop(bt2enPopCallback, &bt2en);
-  bt3en.attachPop(bt3enPopCallback, &bt3en);
+  pb1en.attachPush(pb1enPushCallback, &pb1en);
+  pb2en.attachPush(pb2enPushCallback, &pb2en);
+  pb3en.attachPush(pb3enPushCallback, &pb3en);
+  pb4en.attachPush(pb4enPushCallback, &pb4en);
+  pb5en.attachPush(pb5enPushCallback, &pb5en);
+  pb6en.attachPush(pb6enPushCallback, &pb6en);
   ads.setGain(GAIN_ONE); // 1x gain   +/- 4.096V  1 bit = 0.125mV
   dht.begin();
   rtc.begin();
@@ -687,37 +703,40 @@ void loop()
   termistor1analog = analogRead(termistor1pin);
   termistor2analog = analogRead(termistor2pin);
   termistor3analog = analogRead(termistor3pin);
-  
+
   double termistor1 = Termistor1(termistor1analog);
   double termistor2 = Termistor2(termistor2analog);
   double termistor3 = Termistor3(termistor3analog);
 
-  busvoltage1 = ina3221.getBusVoltage_V(VCC_HATTI);
-  shuntvoltage1 = ina3221.getShuntVoltage_mV(VCC_HATTI);
-  current_mA1 = ina3221.getCurrent_mA(VCC_HATTI);
-  loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
-  if (current_mA1 < 0) {
-    current_mA1 = 0;
-  }
-  VCCHATAMP = current_mA1 / 1000;
+  if ((zamanms - sensetiming) > 1500) {
+    busvoltage1 = ina3221.getBusVoltage_V(VCC_HATTI);
+    shuntvoltage1 = ina3221.getShuntVoltage_mV(VCC_HATTI);
+    current_mA1 = ina3221.getCurrent_mA(VCC_HATTI);
+    loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
+    if (current_mA1 < 0) {
+      current_mA1 = 0;
+    }
+    VCCHATAMP = current_mA1 / 1000;
 
-  busvoltage2 = ina3221.getBusVoltage_V(AKU_SARJ);
-  shuntvoltage2 = ina3221.getShuntVoltage_mV(AKU_SARJ);
-  current_mA2 = ina3221.getCurrent_mA(AKU_SARJ);
-  loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
-  if (current_mA2 < 0) {
-    current_mA2 = 0;
-  }
-  AKUSARJAMP = current_mA2 / 1000;
+    busvoltage2 = ina3221.getBusVoltage_V(AKU_SARJ);
+    shuntvoltage2 = ina3221.getShuntVoltage_mV(AKU_SARJ);
+    current_mA2 = ina3221.getCurrent_mA(AKU_SARJ);
+    loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
+    if (current_mA2 < 0) {
+      current_mA2 = 0;
+    }
+    AKUSARJAMP = current_mA2 / 1000;
 
-  busvoltage3 = ina3221.getBusVoltage_V(AKU_DESARJ);
-  shuntvoltage3 = ina3221.getShuntVoltage_mV(AKU_DESARJ);
-  current_mA3 = ina3221.getCurrent_mA(AKU_DESARJ);
-  loadvoltage3 = busvoltage3 + (shuntvoltage3 / 1000);
-  if (current_mA3 < 0) {
-    current_mA3 = 0;
+    busvoltage3 = ina3221.getBusVoltage_V(AKU_DESARJ);
+    shuntvoltage3 = ina3221.getShuntVoltage_mV(AKU_DESARJ);
+    current_mA3 = ina3221.getCurrent_mA(AKU_DESARJ);
+    loadvoltage3 = busvoltage3 + (shuntvoltage3 / 1000);
+    if (current_mA3 < 0) {
+      current_mA3 = 0;
+    }
+    AKUDESARJAMP = current_mA3 / 1000;
+    sensetiming = zamanms;
   }
-  AKUDESARJAMP = current_mA3 / 1000;
 
   if (SARJOLUYOR == 1) {
     if (zamanms - pidtiming >= 100) {
@@ -954,6 +973,87 @@ void loop()
 
   ///////////////////////////////////////////////////  Nextion Data Send Over
 
+  if ((zamanms - pbswitchdelay) > 20) {
+    if (SUSEVIYEGOSTERGESI == 0) {
+      Serial2.print("vis pb2,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb1,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb2,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb1,1");
+      Serial2.write(nextion_array, 3);
+    }
+
+    if (SUSEVIYEBUZZER == 0) {
+      Serial2.print("vis pb4,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb3,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb4,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb3,1");
+      Serial2.write(nextion_array, 3);
+    }
+
+    if (AKUVARMI == 0) {
+      Serial2.print("vis pb6,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb5,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb6,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb5,1");
+      Serial2.write(nextion_array, 3);
+    }
+
+    if (SUSEVIYEGOSTERGESI == 0) {
+      Serial2.print("vis pb2en,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb1en,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb2en,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb1en,1");
+      Serial2.write(nextion_array, 3);
+    }
+
+    if (SUSEVIYEBUZZER == 0) {
+      Serial2.print("vis pb4en,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb3en,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb4en,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb3en,1");
+      Serial2.write(nextion_array, 3);
+    }
+
+    if (AKUVARMI == 0) {
+      Serial2.print("vis pb6en,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb5en,0");
+      Serial2.write(nextion_array, 3);
+    }
+    else {
+      Serial2.print("vis pb6en,0");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis pb5en,1");
+      Serial2.write(nextion_array, 3);
+    }
+    pbswitchdelay = zamanms;
+  }
+
   if (zamanms - EkranYenileme1 > 300) {
     nem = dht.readHumidity();
     Serial2.print("n8.txt=");
@@ -961,7 +1061,6 @@ void loop()
     Serial2.print(nem);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     sicaklik = dht.readTemperature();
     Serial2.print("t8.txt=");
     Serial2.print("\"");
@@ -1022,19 +1121,16 @@ void loop()
     Serial2.print(sustdeger);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t2.txt=");
     Serial2.print("\"");
     Serial2.print(saltdeger);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t3.txt=");
     Serial2.print("\"");
     Serial2.print(nustdeger);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t4.txt=");
     Serial2.print("\"");
     Serial2.print(naltdeger);
@@ -1048,19 +1144,16 @@ void loop()
     Serial2.print(rtc.getDateStr());
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t11.txt=");
     Serial2.print("\"");
     Serial2.print(rtc.getTimeStr());
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t5.txt=");
     Serial2.print("\"");
     Serial2.print(turntime);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("ta1.val=");
     Serial2.print(gun);
     Serial2.write(nextion_array, 3);
@@ -1070,14 +1163,13 @@ void loop()
     Serial2.print("ta3.val=");
     Serial2.print(yil);
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t13.txt=");
     Serial2.print("\"");
     Serial2.print(GUNSAYACI);
     Serial2.print(".Gun");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
+
     if (GUNSAYACI == 0) {
       ordinalnumber = " Day";
     }
@@ -1108,39 +1200,35 @@ void loop()
     Serial2.print(ordinalnumber);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t14.txt=");
     Serial2.print("\"");
     Serial2.print(akuvolt);
     Serial2.print("V");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("t15a.val=");
     Serial2.print(saat);
     Serial2.write(nextion_array, 3);
     Serial2.print("t15b.val=");
     Serial2.print(dakika);
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("tyuzde.txt=");
     Serial2.print("\"");
     Serial2.print(akuyuzdesi);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("akusarjv.txt=");
     Serial2.print("\"");
     Serial2.print(akusarjvoltaji);
+    Serial2.print("V");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("akusarjamp.txt=");
     Serial2.print("\"");
     Serial2.print(setcurrentA);
+    Serial2.print("A");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
-    delayMicroseconds(30);
     Serial2.print("cgun.txt=");
     Serial2.print("\"");
     Serial2.print(CEVIRMEDGUNSAYISI);
@@ -1175,35 +1263,29 @@ void loop()
     if (GUCTIPI == 1 && AKUVARMI == 1) {
       Serial2.print("vis dc,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       if (SARJOLUYOR == 0) {
         Serial2.print("vis ac,1");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
       }
     }
     else if (GUCTIPI == 0 && AKUVARMI == 1) {
       Serial2.print("vis dc,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       if (SARJOLUYOR == 0) {
         Serial2.print("vis ac,0");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
       }
     }
 
     if (SUSEVIYEGOSTERGESI == 0) {
       Serial2.print("vis p9,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis pic5e,0");
       Serial2.write(nextion_array, 3);
     }
     else {
       Serial2.print("vis p9,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis pic5e,1");
       Serial2.write(nextion_array, 3);
     }
@@ -1211,14 +1293,12 @@ void loop()
     if (akuyuzdesi <= 10) {
       Serial2.print("t14.pco=49152");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("tyuzde.pco=49152");
       Serial2.write(nextion_array, 3);
     }
     else {
       Serial2.print("t14.pco=65535");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("tyuzde.pco=65535");
       Serial2.write(nextion_array, 3);
     }
@@ -1226,25 +1306,20 @@ void loop()
     if (AKUVARMI == 0) {
       Serial2.print("vis obj6e,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis taku,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
+      Serial2.print("vis takuen,0");
+      Serial2.write(nextion_array, 3);
       Serial2.print("vis p4,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis dc,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis ac,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis t14,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis tyuzde,0");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis bat,0");
       Serial2.write(nextion_array, 3);
       AKUVARYOK = 1;
@@ -1252,26 +1327,20 @@ void loop()
     else {
       Serial2.print("vis obj6e,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis taku,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis p4,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis t14,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis tyuzde,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("vis bat,1");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
+
       if (AKUVARYOK == 1) {
         Serial2.print("vis dc,1");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
         Serial2.print("vis ac,1");
         Serial2.write(nextion_array, 3);
       }
@@ -1330,7 +1399,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t17.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1340,7 +1408,6 @@ void loop()
       Serial2.print("KAPALI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t17.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1351,7 +1418,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t18.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1362,7 +1428,6 @@ void loop()
         Serial2.print("KAPALI");
         Serial2.print("\"");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
         Serial2.print("t18.pco=63488");
         Serial2.write(nextion_array, 3);
       }
@@ -1372,7 +1437,6 @@ void loop()
         Serial2.print("D.DISI");
         Serial2.print("\"");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
         Serial2.print("t18.pco=64520");
         Serial2.write(nextion_array, 3);
       }
@@ -1384,7 +1448,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1394,7 +1457,6 @@ void loop()
       Serial2.print("KAPALI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1404,7 +1466,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1414,7 +1475,6 @@ void loop()
       Serial2.print("KAPALI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1424,7 +1484,6 @@ void loop()
       Serial2.print("D.DISI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19.pco=64520");
       Serial2.write(nextion_array, 3);
     }
@@ -1435,7 +1494,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t20.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1445,7 +1503,6 @@ void loop()
       Serial2.print("KAPALI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t20.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1456,7 +1513,6 @@ void loop()
       Serial2.print("ACIK");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("taku.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1466,7 +1522,6 @@ void loop()
       Serial2.print("KAPALI");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("taku.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1477,7 +1532,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t17en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1487,7 +1541,6 @@ void loop()
       Serial2.print("OFF");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t17en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1498,7 +1551,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t18en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1509,7 +1561,6 @@ void loop()
         Serial2.print("OFF");
         Serial2.print("\"");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
         Serial2.print("t18en.pco=63488");
         Serial2.write(nextion_array, 3);
       }
@@ -1519,7 +1570,6 @@ void loop()
         Serial2.print("DISABLED");
         Serial2.print("\"");
         Serial2.write(nextion_array, 3);
-        delayMicroseconds(30);
         Serial2.print("t18en.pco=64520");
         Serial2.write(nextion_array, 3);
       }
@@ -1531,7 +1581,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1541,7 +1590,6 @@ void loop()
       Serial2.print("OFF");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1551,7 +1599,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1561,7 +1608,6 @@ void loop()
       Serial2.print("OFF");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1571,7 +1617,6 @@ void loop()
       Serial2.print("DISABLED");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t19en.pco=64520");
       Serial2.write(nextion_array, 3);
     }
@@ -1582,7 +1627,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t20en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1592,7 +1636,6 @@ void loop()
       Serial2.print("OFF");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("t20en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1603,7 +1646,6 @@ void loop()
       Serial2.print("ON");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("takuen.pco=2016");
       Serial2.write(nextion_array, 3);
     }
@@ -1613,7 +1655,6 @@ void loop()
       Serial2.print("OFF");
       Serial2.print("\"");
       Serial2.write(nextion_array, 3);
-      delayMicroseconds(30);
       Serial2.print("takuen.pco=63488");
       Serial2.write(nextion_array, 3);
     }
@@ -1901,37 +1942,6 @@ void b28PushCallback(void *ptr)
   EEPROM.write(11, CEVIRMEDGUNSAYISI);
 }
 
-void b29PushCallback(void *ptr)
-{
-
-  if (SUSEVIYEGOSTERGESI == 1) {
-    Serial2.print("bt1.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt1.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-
-  if (SUSEVIYEBUZZER == 1) {
-    Serial2.print("bt2.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt2.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-
-  if (AKUVARMI == 1) {
-    Serial2.print("bt3.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt3.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-}
-
 void b30PushCallback(void *ptr)
 {
   akusarjv = akusarjv + 1;
@@ -1978,7 +1988,7 @@ void b34PushCallback(void *ptr)
 
 void b35PushCallback(void *ptr)
 {
-  akusarjcurr = akusarjcurr + 1;
+  akusarjcurr = akusarjcurr + 5;
   if (akusarjcurr > 200) {
     akusarjcurr = 0;
   }
@@ -1987,71 +1997,71 @@ void b35PushCallback(void *ptr)
 
 void b36PushCallback(void *ptr)
 {
-  akusarjcurr = akusarjcurr - 1;
+  akusarjcurr = akusarjcurr - 5;
   if (akusarjcurr < 0) {
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
 }
 
-void bt1PopCallback(void *ptr)
+void pb1PushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt1PopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
-
-  bt1.getValue(&dual_state);
-  if (dual_state) {
-    SUSEVIYEGOSTERGESI = 1;
-    EEPROM.write(10, SUSEVIYEGOSTERGESI);
-  }
-  else {
-    SUSEVIYEGOSTERGESI = 0;
-    EEPROM.write(10, SUSEVIYEGOSTERGESI);
-  }
+  SUSEVIYEGOSTERGESI = 0;
+  EEPROM.write(10, SUSEVIYEGOSTERGESI);
+  Serial2.print("vis pb2,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb1,0");
+  Serial2.write(nextion_array, 3);
 }
 
-void bt2PopCallback(void *ptr)
+void pb2PushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt2PopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
-
-  bt2.getValue(&dual_state);
-  if (dual_state) {
-    SUSEVIYEBUZZER = 1;
-    EEPROM.write(9, SUSEVIYEBUZZER);
-  }
-  else {
-    SUSEVIYEBUZZER = 0;
-    EEPROM.write(9, SUSEVIYEBUZZER);
-  }
+  SUSEVIYEGOSTERGESI = 1;
+  EEPROM.write(10, SUSEVIYEGOSTERGESI);
+  Serial2.print("vis pb2,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb1,1");
+  Serial2.write(nextion_array, 3);
 }
 
-void bt3PopCallback(void *ptr)
+void pb3PushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt3PopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
+  SUSEVIYEBUZZER = 0;
+  EEPROM.write(9, SUSEVIYEBUZZER);
+  Serial2.print("vis pb4,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb3,0");
+  Serial2.write(nextion_array, 3);
+}
 
-  bt3.getValue(&dual_state);
-  if (dual_state) {
-    AKUVARMI = 1;
-    EEPROM.write(8, AKUVARMI);
-  }
-  else {
-    AKUVARMI = 0;
-    EEPROM.write(8, AKUVARMI);
-  }
+void pb4PushCallback(void *ptr)
+{
+  SUSEVIYEBUZZER = 1;
+  EEPROM.write(9, SUSEVIYEBUZZER);
+  Serial2.print("vis pb4,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb3,1");
+  Serial2.write(nextion_array, 3);
+}
+
+void pb5PushCallback(void *ptr)
+{
+  AKUVARMI = 0;
+  EEPROM.write(8, AKUVARMI);
+  Serial2.print("vis pb6,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb5,0");
+  Serial2.write(nextion_array, 3);
+}
+
+void pb6PushCallback(void *ptr)
+{
+  AKUVARMI = 1;
+  EEPROM.write(8, AKUVARMI);
+  Serial2.print("vis pb6,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb5,1");
+  Serial2.write(nextion_array, 3);
 }
 
 /**********************************************************************************/ //EN İÇİN DOKUNMATİK PANEL GERİBİLDİRİMİ
@@ -2289,37 +2299,6 @@ void b28enPushCallback(void *ptr)
   EEPROM.write(11, CEVIRMEDGUNSAYISI);
 }
 
-void b29enPushCallback(void *ptr)
-{
-
-  if (SUSEVIYEGOSTERGESI == 1) {
-    Serial2.print("bt1.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt1.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-
-  if (SUSEVIYEBUZZER == 1) {
-    Serial2.print("bt2.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt2.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-
-  if (AKUVARMI == 1) {
-    Serial2.print("bt3.val=1");
-    Serial2.write(nextion_array, 3);
-  }
-  else {
-    Serial2.print("bt3.val=0");
-    Serial2.write(nextion_array, 3);
-  }
-}
-
 void b30enPushCallback(void *ptr)
 {
   akusarjv = akusarjv + 1;
@@ -2366,7 +2345,7 @@ void b34enPushCallback(void *ptr)
 
 void b35enPushCallback(void *ptr)
 {
-  akusarjcurr = akusarjcurr + 1;
+  akusarjcurr = akusarjcurr + 5;
   if (akusarjcurr > 200) {
     akusarjcurr = 0;
   }
@@ -2375,70 +2354,71 @@ void b35enPushCallback(void *ptr)
 
 void b36enPushCallback(void *ptr)
 {
-  akusarjcurr = akusarjcurr - 1;
+  akusarjcurr = akusarjcurr - 5;
   if (akusarjcurr < 0) {
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
 }
 
-void bt1enPopCallback(void *ptr)
+void pb1enPushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt1enPopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
-
-  bt1en.getValue(&dual_state);
-  if (dual_state) {
-    SUSEVIYEGOSTERGESI = 1;
-    EEPROM.write(10, SUSEVIYEGOSTERGESI);
-  }
-  else {
-    SUSEVIYEGOSTERGESI = 0;
-    EEPROM.write(10, SUSEVIYEGOSTERGESI);
-  }
+  SUSEVIYEGOSTERGESI = 0;
+  EEPROM.write(10, SUSEVIYEGOSTERGESI);
+  Serial2.print("vis pb2en,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb1en,0");
+  Serial2.write(nextion_array, 3);
 }
 
-void bt2enPopCallback(void *ptr)
+void pb2enPushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt2enPopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
-
-  bt2en.getValue(&dual_state);
-  if (dual_state) {
-    SUSEVIYEBUZZER = 1;
-    EEPROM.write(9, SUSEVIYEBUZZER);
-  }
-  else {
-    SUSEVIYEBUZZER = 0;
-    EEPROM.write(9, SUSEVIYEBUZZER);
-  }
+  SUSEVIYEGOSTERGESI = 1;
+  EEPROM.write(10, SUSEVIYEGOSTERGESI);
+  Serial2.print("vis pb2en,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb1en,1");
+  Serial2.write(nextion_array, 3);
 }
 
-void bt3enPopCallback(void *ptr)
+void pb3enPushCallback(void *ptr)
 {
-  uint32_t dual_state;
-  NexDSButton *btn = (NexDSButton *)ptr;
-  dbSerialPrintln("bt3enPopCallback");
-  dbSerialPrint("ptr=");
-  dbSerialPrintln((uint32_t)ptr);
-  memset(buffer, 0, sizeof(buffer));
-
-  bt3en.getValue(&dual_state);
-  if (dual_state) {
-    AKUVARMI = 1;
-    EEPROM.write(8, AKUVARMI);
-  }
-  else {
-    AKUVARMI = 0;
-    EEPROM.write(8, AKUVARMI);
-  }
+  SUSEVIYEBUZZER = 0;
+  EEPROM.write(9, SUSEVIYEBUZZER);
+  Serial2.print("vis pb4en,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb3en,0");
+  Serial2.write(nextion_array, 3);
 }
+
+void pb4enPushCallback(void *ptr)
+{
+  SUSEVIYEBUZZER = 1;
+  EEPROM.write(9, SUSEVIYEBUZZER);
+  Serial2.print("vis pb4en,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb3en,1");
+  Serial2.write(nextion_array, 3);
+}
+
+void pb5enPushCallback(void *ptr)
+{
+  AKUVARMI = 0;
+  EEPROM.write(8, AKUVARMI);
+  Serial2.print("vis pb6en,1");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb5en,0");
+  Serial2.write(nextion_array, 3);
+}
+
+void pb6enPushCallback(void *ptr)
+{
+  AKUVARMI = 1;
+  EEPROM.write(8, AKUVARMI);
+  Serial2.print("vis pb6en,0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("vis pb5en,1");
+  Serial2.write(nextion_array, 3);
+}
+
 /**********************************************************************************/
