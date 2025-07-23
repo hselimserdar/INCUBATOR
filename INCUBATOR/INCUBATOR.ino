@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.1.5*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.1.6*/
 
 #include "Nextion.h"
 #include "SDL_Arduino_INA3221.h"
@@ -9,7 +9,6 @@
 #include <math.h>
 #include <Adafruit_ADS1015.h>
 
-Adafruit_ADS1115 ads;
 #define DHTTYPE DHT22
 #define CH1 2 //nem tahliye
 #define CH2 3 //yumurta çevirici
@@ -34,6 +33,7 @@ Adafruit_ADS1115 ads;
 #define AKU_SARJ 2
 #define AKU_DESARJ 3
 
+Adafruit_ADS1115 ads;
 SDL_Arduino_INA3221 ina3221;
 DHT dht(DHTPIN, DHTTYPE); //n8-nem, t8-sıcaklık
 DS3231 rtc(SDA, SCL);
@@ -226,6 +226,26 @@ NexTouch * nex_listen_list[] =
   NULL
 };
 
+const int AkuYuzdesiNumReadings = 10;
+int AkuYuzdesiReadings[AkuYuzdesiNumReadings];
+int AkuYuzdesiReadIndex = 0;
+int AkuYuzdesiTotal = 0;
+byte akuyuzdesiort; //Akünün ortalama şarj yüzdesi
+
+const int termistorNumReadings = 5;
+int termistorReadIndex = 0;
+int termistor1Readings[termistorNumReadings];
+int termistor1Total = 0;
+byte termistor1ort;
+
+int termistor2Readings[termistorNumReadings];
+int termistor2Total = 0;
+byte termistor2ort;
+
+int termistor3Readings[termistorNumReadings];
+int termistor3Total = 0;
+byte termistor3ort;
+
 unsigned long zamanms = 0; //Kod başladıktan sonra geçen zaman (ms cinsinden) NOT:MAX 50 GÜN
 unsigned long zaman = 0; //Kod başladıktan sonra geçen zaman (sn cinsinden)
 float zamanprevgucgos = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
@@ -336,7 +356,7 @@ float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
 String pcbsurum = "V3.2";
-String yazilimsurum = "V3.1.5";
+String yazilimsurum = "V3.1.6";
 byte akusarjcurr;
 float setcurrentA;
 float setcurrentMA;
@@ -375,88 +395,7 @@ void setup()
   Serial2.end();
   Serial2.begin(115200);
   page0.show();
-  b1.attachPop(b1PopCallback, &b1);
-  b2.attachPush(b2PushCallback, &b2);
-  b3.attachPush(b3PushCallback, &b3);
-  b4.attachPush(b4PushCallback, &b4);
-  b5.attachPush(b5PushCallback, &b5);
-  b6.attachPush(b6PushCallback, &b6);
-  b7.attachPush(b7PushCallback, &b7);
-  b8.attachPush(b8PushCallback, &b8);
-  b9.attachPush(b9PushCallback, &b9);
-  b10.attachPush(b10PushCallback, &b10);
-  b11.attachPush(b11PushCallback, &b11);
-  b12.attachPush(b12PushCallback, &b12);
-  b13.attachPush(b13PushCallback, &b13);
-  b14.attachPush(b14PushCallback, &b14);
-  b15.attachPush(b15PushCallback, &b15);
-  b16.attachPush(b16PushCallback, &b16);
-  b17.attachPush(b17PushCallback, &b17);
-  b18.attachPush(b18PushCallback, &b18);
-  b19.attachPush(b19PushCallback, &b19);
-  b20.attachPush(b20PushCallback, &b20);
-  b21.attachPush(b21PushCallback, &b21);
-  b22.attachPush(b22PushCallback, &b22);
-  b23.attachPush(b23PushCallback, &b23);
-  b24.attachPush(b24PushCallback, &b24);
-  b25.attachPush(b25PushCallback, &b25);
-  b26.attachPush(b26PushCallback, &b26);
-  b27.attachPush(b27PushCallback, &b27);
-  b28.attachPush(b28PushCallback, &b28);
-  b30.attachPush(b30PushCallback, &b30);
-  b31.attachPush(b31PushCallback, &b31);
-  b32.attachPush(b32PushCallback, &b32);
-  b33.attachPush(b33PushCallback, &b33);
-  b34.attachPush(b34PushCallback, &b34);
-  b35.attachPush(b35PushCallback, &b35);
-  b36.attachPush(b36PushCallback, &b36);
-  pb1.attachPush(pb1PushCallback, &pb1);
-  pb2.attachPush(pb2PushCallback, &pb2);
-  pb3.attachPush(pb3PushCallback, &pb3);
-  pb4.attachPush(pb4PushCallback, &pb4);
-  pb5.attachPush(pb5PushCallback, &pb5);
-  pb6.attachPush(pb6PushCallback, &pb6);
-  b1en.attachPop(b1enPopCallback, &b1en);
-  b2en.attachPush(b2enPushCallback, &b2en);
-  b3en.attachPush(b3enPushCallback, &b3en);
-  b4en.attachPush(b4enPushCallback, &b4en);
-  b5en.attachPush(b5enPushCallback, &b5en);
-  b6en.attachPush(b6enPushCallback, &b6en);
-  b7en.attachPush(b7enPushCallback, &b7en);
-  b8en.attachPush(b8enPushCallback, &b8en);
-  b9en.attachPush(b9enPushCallback, &b9en);
-  b10en.attachPush(b10enPushCallback, &b10en);
-  b11en.attachPush(b11enPushCallback, &b11en);
-  b12en.attachPush(b12enPushCallback, &b12en);
-  b13en.attachPush(b13enPushCallback, &b13en);
-  b14en.attachPush(b14enPushCallback, &b14en);
-  b15en.attachPush(b15enPushCallback, &b15en);
-  b16en.attachPush(b16enPushCallback, &b16en);
-  b17en.attachPush(b17enPushCallback, &b17en);
-  b18en.attachPush(b18enPushCallback, &b18en);
-  b19en.attachPush(b19enPushCallback, &b19en);
-  b20en.attachPush(b20enPushCallback, &b20en);
-  b21en.attachPush(b21enPushCallback, &b21en);
-  b22en.attachPush(b22enPushCallback, &b22en);
-  b23en.attachPush(b23enPushCallback, &b23en);
-  b24en.attachPush(b24enPushCallback, &b24en);
-  b25en.attachPush(b25enPushCallback, &b25en);
-  b26en.attachPush(b26enPushCallback, &b26en);
-  b27en.attachPush(b27enPushCallback, &b27en);
-  b28en.attachPush(b28enPushCallback, &b28en);
-  b30en.attachPush(b30enPushCallback, &b30en);
-  b31en.attachPush(b31enPushCallback, &b31en);
-  b32en.attachPush(b32enPushCallback, &b32en);
-  b33en.attachPush(b33enPushCallback, &b33en);
-  b34en.attachPush(b34enPushCallback, &b34en);
-  b35en.attachPush(b35enPushCallback, &b35en);
-  b36en.attachPush(b36enPushCallback, &b36en);
-  pb1en.attachPush(pb1enPushCallback, &pb1en);
-  pb2en.attachPush(pb2enPushCallback, &pb2en);
-  pb3en.attachPush(pb3enPushCallback, &pb3en);
-  pb4en.attachPush(pb4enPushCallback, &pb4en);
-  pb5en.attachPush(pb5enPushCallback, &pb5en);
-  pb6en.attachPush(pb6enPushCallback, &pb6en);
+  pushcallback();
   ads.setGain(GAIN_ONE); // 1x gain   +/- 4.096V  1 bit = 0.125mV
   dht.begin();
   rtc.begin();
@@ -665,6 +604,10 @@ void setup()
     Serial2.print("page MAIN");
     Serial2.write(nextion_array, 3);
   }
+
+  for (int thisReading = 0; thisReading < AkuYuzdesiNumReadings; thisReading++) {
+    AkuYuzdesiReadings[thisReading] = 0;
+  }
   ///////////////////////////////////////////////////////////////////////////////////
   delay(250);
 }
@@ -736,6 +679,38 @@ void loop()
     }
     AKUDESARJAMP = current_mA3 / 1000;
     sensetiming = zamanms;
+  }
+
+  if ((millis() / 1000) % 1 == 0) {
+    AkuYuzdesiTotal = AkuYuzdesiTotal - AkuYuzdesiReadings[AkuYuzdesiReadIndex];
+    AkuYuzdesiReadings[AkuYuzdesiReadIndex] = akuyuzdesi;
+    AkuYuzdesiTotal = AkuYuzdesiTotal + AkuYuzdesiReadings[AkuYuzdesiReadIndex];
+    AkuYuzdesiReadIndex = AkuYuzdesiReadIndex + 1;
+    akuyuzdesiort = AkuYuzdesiTotal / AkuYuzdesiNumReadings;
+
+    if (AkuYuzdesiReadIndex >= AkuYuzdesiNumReadings) {
+      AkuYuzdesiReadIndex = 0;
+    }
+
+    termistor1Total = termistor1Total - termistor1Readings[termistorReadIndex];
+    termistor1Readings[termistorReadIndex] = termistor1;
+    termistor1Total = termistor1Total + termistor1Readings[termistorReadIndex];
+    termistor1ort = termistor1Total / termistorNumReadings;
+
+    termistor2Total = termistor2Total - termistor2Readings[termistorReadIndex];
+    termistor2Readings[termistorReadIndex] = termistor2;
+    termistor2Total = termistor2Total + termistor2Readings[termistorReadIndex];
+    termistor2ort = termistor2Total / termistorNumReadings;
+
+    termistor3Total = termistor3Total - termistor3Readings[termistorReadIndex];
+    termistor3Readings[termistorReadIndex] = termistor3;
+    termistor3Total = termistor3Total + termistor3Readings[termistorReadIndex];
+    termistor3ort = termistor3Total / termistorNumReadings;
+
+    termistorReadIndex = termistorReadIndex + 1;
+    if (termistorReadIndex >= termistorNumReadings) {
+      termistorReadIndex = 0;
+    }
   }
 
   if (SARJOLUYOR == 1) {
@@ -821,11 +796,11 @@ void loop()
     kanal5 = 1;
   }
 
-  if (GUCTIPI == 0 && akuyuzdesi >= 5 && AKUVARMI == 1 && kanal3 == 1) {
-    digitalWrite(CH5, LOW);
+  if (GUCTIPI == 0 && akuyuzdesiort >= 5 && AKUVARMI == 1 && kanal3 == 1) {
+    digitalWrite(CH5, HIGH);
   }
   else {
-    digitalWrite(CH5, HIGH);
+    digitalWrite(CH5, LOW);
   }
 
   if (GUCTIPI == 0) {
@@ -1079,19 +1054,19 @@ void loop()
     Serial2.write(nextion_array, 3);
     Serial2.print("cputemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor1);
+    Serial2.print(termistor1ort);
     Serial2.print("°C");   //°C
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("psutemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor3);
+    Serial2.print(termistor3ort);
     Serial2.print("°C");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("regtemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor2);
+    Serial2.print(termistor2ort);
     Serial2.print("°C");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
@@ -1214,7 +1189,7 @@ void loop()
     Serial2.write(nextion_array, 3);
     Serial2.print("tyuzde.txt=");
     Serial2.print("\"");
-    Serial2.print(akuyuzdesi);
+    Serial2.print(akuyuzdesiort);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("akusarjv.txt=");
@@ -1290,7 +1265,7 @@ void loop()
       Serial2.write(nextion_array, 3);
     }
 
-    if (akuyuzdesi <= 10) {
+    if (akuyuzdesiort <= 10) {
       Serial2.print("t14.pco=49152");
       Serial2.write(nextion_array, 3);
       Serial2.print("tyuzde.pco=49152");
@@ -1359,20 +1334,20 @@ void loop()
   }
 
   if (nem <= naltdeger) {
-    digitalWrite(CH4, LOW);
+    digitalWrite(CH4, HIGH);
     kanal4 = 1;
   }
   else if (nem >= nustdeger) {
-    digitalWrite(CH4, HIGH);
+    digitalWrite(CH4, LOW);
     kanal4 = 0;
   }
 
   if (nem <= nalarm) {
-    digitalWrite(CH1, HIGH);
+    digitalWrite(CH1, LOW);
     kanal1 = 0;
   }
   else if (nem >= nustdeger) {
-    digitalWrite(CH1, LOW);
+    digitalWrite(CH1, HIGH);
     kanal1 = 1;
   }
 
@@ -1460,7 +1435,7 @@ void loop()
       Serial2.print("t19.pco=63488");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesi >= 5) {
+    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
       Serial2.print("t19.txt=");
       Serial2.print("\"");
       Serial2.print("ACIK");
@@ -1469,7 +1444,7 @@ void loop()
       Serial2.print("t19.pco=2016");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesi >= 5) {
+    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
       Serial2.print("t19.txt=");
       Serial2.print("\"");
       Serial2.print("KAPALI");
@@ -1593,7 +1568,7 @@ void loop()
       Serial2.print("t19en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesi >= 5) {
+    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
       Serial2.print("t19en.txt=");
       Serial2.print("\"");
       Serial2.print("ON");
@@ -1602,7 +1577,7 @@ void loop()
       Serial2.print("t19en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesi >= 5) {
+    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
       Serial2.print("t19en.txt=");
       Serial2.print("\"");
       Serial2.print("OFF");
@@ -2422,3 +2397,88 @@ void pb6enPushCallback(void *ptr)
 }
 
 /**********************************************************************************/
+
+void pushcallback() {
+  b1.attachPop(b1PopCallback, &b1);
+  b2.attachPush(b2PushCallback, &b2);
+  b3.attachPush(b3PushCallback, &b3);
+  b4.attachPush(b4PushCallback, &b4);
+  b5.attachPush(b5PushCallback, &b5);
+  b6.attachPush(b6PushCallback, &b6);
+  b7.attachPush(b7PushCallback, &b7);
+  b8.attachPush(b8PushCallback, &b8);
+  b9.attachPush(b9PushCallback, &b9);
+  b10.attachPush(b10PushCallback, &b10);
+  b11.attachPush(b11PushCallback, &b11);
+  b12.attachPush(b12PushCallback, &b12);
+  b13.attachPush(b13PushCallback, &b13);
+  b14.attachPush(b14PushCallback, &b14);
+  b15.attachPush(b15PushCallback, &b15);
+  b16.attachPush(b16PushCallback, &b16);
+  b17.attachPush(b17PushCallback, &b17);
+  b18.attachPush(b18PushCallback, &b18);
+  b19.attachPush(b19PushCallback, &b19);
+  b20.attachPush(b20PushCallback, &b20);
+  b21.attachPush(b21PushCallback, &b21);
+  b22.attachPush(b22PushCallback, &b22);
+  b23.attachPush(b23PushCallback, &b23);
+  b24.attachPush(b24PushCallback, &b24);
+  b25.attachPush(b25PushCallback, &b25);
+  b26.attachPush(b26PushCallback, &b26);
+  b27.attachPush(b27PushCallback, &b27);
+  b28.attachPush(b28PushCallback, &b28);
+  b30.attachPush(b30PushCallback, &b30);
+  b31.attachPush(b31PushCallback, &b31);
+  b32.attachPush(b32PushCallback, &b32);
+  b33.attachPush(b33PushCallback, &b33);
+  b34.attachPush(b34PushCallback, &b34);
+  b35.attachPush(b35PushCallback, &b35);
+  b36.attachPush(b36PushCallback, &b36);
+  pb1.attachPush(pb1PushCallback, &pb1);
+  pb2.attachPush(pb2PushCallback, &pb2);
+  pb3.attachPush(pb3PushCallback, &pb3);
+  pb4.attachPush(pb4PushCallback, &pb4);
+  pb5.attachPush(pb5PushCallback, &pb5);
+  pb6.attachPush(pb6PushCallback, &pb6);
+  b1en.attachPop(b1enPopCallback, &b1en);
+  b2en.attachPush(b2enPushCallback, &b2en);
+  b3en.attachPush(b3enPushCallback, &b3en);
+  b4en.attachPush(b4enPushCallback, &b4en);
+  b5en.attachPush(b5enPushCallback, &b5en);
+  b6en.attachPush(b6enPushCallback, &b6en);
+  b7en.attachPush(b7enPushCallback, &b7en);
+  b8en.attachPush(b8enPushCallback, &b8en);
+  b9en.attachPush(b9enPushCallback, &b9en);
+  b10en.attachPush(b10enPushCallback, &b10en);
+  b11en.attachPush(b11enPushCallback, &b11en);
+  b12en.attachPush(b12enPushCallback, &b12en);
+  b13en.attachPush(b13enPushCallback, &b13en);
+  b14en.attachPush(b14enPushCallback, &b14en);
+  b15en.attachPush(b15enPushCallback, &b15en);
+  b16en.attachPush(b16enPushCallback, &b16en);
+  b17en.attachPush(b17enPushCallback, &b17en);
+  b18en.attachPush(b18enPushCallback, &b18en);
+  b19en.attachPush(b19enPushCallback, &b19en);
+  b20en.attachPush(b20enPushCallback, &b20en);
+  b21en.attachPush(b21enPushCallback, &b21en);
+  b22en.attachPush(b22enPushCallback, &b22en);
+  b23en.attachPush(b23enPushCallback, &b23en);
+  b24en.attachPush(b24enPushCallback, &b24en);
+  b25en.attachPush(b25enPushCallback, &b25en);
+  b26en.attachPush(b26enPushCallback, &b26en);
+  b27en.attachPush(b27enPushCallback, &b27en);
+  b28en.attachPush(b28enPushCallback, &b28en);
+  b30en.attachPush(b30enPushCallback, &b30en);
+  b31en.attachPush(b31enPushCallback, &b31en);
+  b32en.attachPush(b32enPushCallback, &b32en);
+  b33en.attachPush(b33enPushCallback, &b33en);
+  b34en.attachPush(b34enPushCallback, &b34en);
+  b35en.attachPush(b35enPushCallback, &b35en);
+  b36en.attachPush(b36enPushCallback, &b36en);
+  pb1en.attachPush(pb1enPushCallback, &pb1en);
+  pb2en.attachPush(pb2enPushCallback, &pb2en);
+  pb3en.attachPush(pb3enPushCallback, &pb3en);
+  pb4en.attachPush(pb4enPushCallback, &pb4en);
+  pb5en.attachPush(pb5enPushCallback, &pb5en);
+  pb6en.attachPush(pb6enPushCallback, &pb6en);
+}
