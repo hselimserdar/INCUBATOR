@@ -1,6 +1,6 @@
 byte np[95];
-long timerhum;
-long humgdrawtimer;
+unsigned long timerhum;
+unsigned long humgdrawtimer;
 
 void humgraphdraw(void) {
   timerhum = millis() / 200;

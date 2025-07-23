@@ -1,53 +1,108 @@
 byte sp[95];
 float sTp[95];
 byte tempdif = 0;
+byte calTemp = 0;
 byte TempG;
 byte tempgraph;
-long timertemp;
-long tempgdrawtimer;
+unsigned long timertemp;
+unsigned long tempgdrawtimer;
 
 void tempgraphdraw(void) {
   timertemp = millis() / 200;
   if ((timertemp - tempgdrawtimer) >= 5) {
     if (temp < 20.10) {
-      tempgraph = mapFloat(temp, 15.00, 20.00, 1, 100);
+      if (temp < 15) {
+        tempgraph = 1;
+      }
+      else if (temp > 20) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 15.00, 20.00, 1, 100);
+      }
       if (tempdif != 1) {
-        calibrateTempGraph(1);
+        calTemp = 1;
+        calibrateTempGraph();
         tempdif = 1;
       }
     }
     else if (temp < 25.1) {
-      tempgraph = mapFloat(temp, 20.00, 25.00, 1, 100);
+      if (temp < 20) {
+        tempgraph = 1;
+      }
+      else if (temp > 25) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 20.00, 25.00, 1, 100);
+      }
       if (tempdif != 2) {
-        calibrateTempGraph(2);
+        calTemp = 2;
+        calibrateTempGraph();
         tempdif = 2;
       }
     }
     else if (temp < 30.1) {
-      tempgraph = mapFloat(temp, 25.00, 30.00, 1, 100);
+      if (temp < 25) {
+        tempgraph = 1;
+      }
+      else if (temp > 30) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 25.00, 30.00, 1, 100);
+      }
       if (tempdif != 3) {
-        calibrateTempGraph(3);
+        calTemp = 3;
+        calibrateTempGraph();
         tempdif = 3;
       }
     }
     else if (temp < 35.1) {
-      tempgraph = mapFloat(temp, 30.00, 35.00, 1, 100);
+      if (temp < 30) {
+        tempgraph = 1;
+      }
+      else if (temp > 35) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 30.00, 35.00, 1, 100);
+      }
       if (tempdif != 4) {
-        calibrateTempGraph(4);
+        calTemp = 4;
+        calibrateTempGraph();
         tempdif = 4;
       }
     }
     else if (temp < 40.1) {
-      tempgraph = mapFloat(temp, 35.00, 40.00, 1, 100);
+      if (temp < 35) {
+        tempgraph = 1;
+      }
+      else if (temp > 40) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 35.00, 40.00, 1, 100);
+      }
       if (tempdif != 5) {
-        calibrateTempGraph(5);
+        calTemp = 5;
+        calibrateTempGraph();
         tempdif = 5;
       }
     }
     else {
-      tempgraph = mapFloat(temp, 40.00, 45.00, 1, 100);
+      if (temp < 40) {
+        tempgraph = 1;
+      }
+      else if (temp > 45) {
+        tempgraph = 100;
+      }
+      else {
+        tempgraph = mapFloat(temp, 40.00, 45.00, 1, 100);
+      }
       if (tempdif != 6) {
-        calibrateTempGraph(6);
+        calTemp = 6;
+        calibrateTempGraph();
         tempdif = 6;
       }
     }
@@ -69,7 +124,7 @@ void tempgraphdraw(void) {
 
 void sliptempgraph(void) {
   for (int i = 0; i < 94; i++) {
-    byte a = i+1;
+    byte a = i + 1;
     sp[i] = sp[a];
     sTp[i] = sTp[a];
   }
@@ -82,41 +137,89 @@ void zeroouttempgraph(void) {
   }
 }
 
-void calibrateTempGraph(byte a) {
-  if (a == 1) {
+void calibrateTempGraph() {
+  if (calTemp == 1) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 15.00, 20.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 15) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 20) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 15.00, 20.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
-  else if (a == 2) {
+  else if (calTemp == 2) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 20.00, 25.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 20) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 25) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 20.00, 25.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
-  else if (a == 3) {
+  else if (calTemp == 3) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 25.00, 30.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 25) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 30) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 25.00, 30.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
-  else if (a == 4) {
+  else if (calTemp == 4) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 30.00, 35.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 30) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 35) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 30.00, 35.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
-  else if (a == 5) {
+  else if (calTemp == 5) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 35.00, 40.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 35) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 40) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 35.00, 40.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
-  else if(a == 6){
+  else if (calTemp == 6) {
     for (int i = 0; i < 95; i++) {
-      TempG = mapFloat(temp, 40.00, 45.00, 1, 100);
-      sp[i] = TempG;
+      if (sTp[i] < 40) {
+        sp[i] = 1;
+      }
+      else if (sTp[i] > 45) {
+        sp[i] = 100;
+      }
+      else {
+        sp[i] = mapFloat(sTp[i], 40.00, 45.00, 1, 100);
+      }
     }
+    calTemp = 0;
   }
 }
