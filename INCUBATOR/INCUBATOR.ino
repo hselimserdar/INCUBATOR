@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V2.6*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V2.7*/
 
 #include "Nextion.h"
 #include <DHT.h>
@@ -30,6 +30,10 @@ Adafruit_ADS1115 ads;
 DHT dht(DHTPIN, DHTTYPE); //n8-nem, t8-sıcaklık
 DS3231 rtc(SDA, SCL);
 Time  t;
+extern HardwareSerial Serial1;
+extern HardwareSerial Serial2;
+#define NEX_RET_CMD_FINISHED (0x01)
+#define NEX_RET_EVENT_LAUNCHED (0x88)
 
 NexPage page0 = NexPage(0, 0, "INTRO");
 NexPage page1 = NexPage(1, 0, "MAIN");
@@ -114,9 +118,10 @@ NexTouch *nex_listen_list[] =
 };
 
 unsigned long zamanms = 0; //Kod başladıktan sonra geçen zaman (ms cinsinden) NOT:MAX 50 GÜN
-unsigned long zaman = 0; //Kod başladıktan sonra geçen zaman (sn cinsinden)
-unsigned long zamanprevgucgos = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
-unsigned long zamanprevbuz = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
+float zaman = 0; //Kod başladıktan sonra geçen zaman (sn cinsinden)
+float zamanprevgucgos = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
+float zamanprevbuz = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
+float akuvrefresh = 0; //En son kaydedilen kod başladıktan sonra geçen zaman (sn cinsinden)
 float R1 = 30000.0;
 float R2 = 10000.0;
 float akuvolt = 0.0; //Akü voltajı
@@ -190,11 +195,11 @@ void setup()
   digitalWrite(RESETPIN, HIGH);
   pinMode(RESETPIN, OUTPUT);
   digitalWrite(RESETPIN, HIGH);
-  Serial.begin(9600);
-  Serial.print("baud=115200");
-  Serial.write(nextion_array, 3);
-  Serial.end();
-  Serial.begin(115200);
+  Serial2.begin(9600);
+  Serial2.print("baud=115200");
+  Serial2.write(nextion_array, 3);
+  Serial2.end();
+  Serial2.begin(115200);
   b1.attachPop(b1PopCallback, &b1);
   b2.attachPush(b2PushCallback, &b2);
   b3.attachPush(b3PushCallback, &b3);
@@ -235,22 +240,22 @@ void setup()
   rtc.begin();
   ads.begin();
   page0.show();
-  Serial.print("page INTRO");
-  Serial.write(nextion_array, 3);
-  Serial.print("p1.val=0");
-  Serial.write(nextion_array, 3);
-  Serial.print("p2.val=0");
-  Serial.write(nextion_array, 3);
+  Serial2.print("page INTRO");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("p1.val=0");
+  Serial2.write(nextion_array, 3);
+  Serial2.print("p2.val=0");
+  Serial2.write(nextion_array, 3);
   for (byte p = 0 ; p < 101 ; p++) {
-    Serial.print("p1.val=");
-    Serial.print(p);
-    Serial.write(nextion_array, 3);
+    Serial2.print("p1.val=");
+    Serial2.print(p);
+    Serial2.write(nextion_array, 3);
     delay(30);
   }
   for (byte p2 = 0 ; p2 < 101 ; p2++) {
-    Serial.print("p2.val=");
-    Serial.print(p2);
-    Serial.write(nextion_array, 3);
+    Serial2.print("p2.val=");
+    Serial2.print(p2);
+    Serial2.write(nextion_array, 3);
     delay(30);
   }
   pinMode(BUZZERPIN, OUTPUT);
@@ -262,8 +267,8 @@ void setup()
   delay(80);
   digitalWrite(BUZZERPIN, LOW);
   page1.show();
-  Serial.print("page MAIN");
-  Serial.write(nextion_array, 3);
+  Serial2.print("page MAIN");
+  Serial2.write(nextion_array, 3);
   smin = EEPROM.read(0);
   smax = EEPROM.read(1);
   hmin = EEPROM.read(2);
@@ -294,7 +299,6 @@ void loop()
   analogakuvoltaji = adc0;
   GUCTIPI = digitalRead(GERILIMPIN);
   vgiris = (analogakuvoltaji * 0.000125);
-  akuvolt = (vgiris / (R2 / (R1 + R2)));
   zamanms = millis();
   zaman = zamanms / 1000;
   saltdeger = (200 + smin) / a;
@@ -310,54 +314,58 @@ void loop()
   s4 = analogRead(seviye4);
   akusarjvoltaji = 12 + (akusarjv / 50);
 
-  if (akuvolt < 2) {
-    akuvolt = 0;
-  }
-  if (akuvolt < 10.5) {
-    akuyuzdesi = 0;
-  }
-  else if (akuvolt >= 10.5 && akuvolt < 11.51) {
-    yuzdehesap = (akuvolt - 10.5) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 101, 0, 10);
-  }
-  else if (akuvolt >= 11.51 && akuvolt < 11.66) {
-    yuzdehesap = (akuvolt - 11.51) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 15, 10, 20);
-  }
-  else if (akuvolt >= 11.66 && akuvolt < 11.81) {
-    yuzdehesap = (akuvolt - 11.66) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 15, 20, 30);
-  }
-  else if (akuvolt >= 11.81 && akuvolt < 11.95) {
-    yuzdehesap = (akuvolt - 11.81) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 14, 30, 40);
-  }
-  else if (akuvolt >= 11.95 && akuvolt < 12.05) {
-    yuzdehesap = (akuvolt - 11.95) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 10, 40, 50);
-  }
-  else if (akuvolt >= 12.05 && akuvolt < 12.15) {
-    yuzdehesap = (akuvolt - 12.05) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 10, 50, 60);
-  }
-  else if (akuvolt >= 12.15 && akuvolt < 12.30) {
-    yuzdehesap = (akuvolt - 12.15) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 15, 60, 70);
-  }
-  else if (akuvolt >= 12.30 && akuvolt < 12.50) {
-    yuzdehesap = (akuvolt - 12.30) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 20, 70, 80);
-  }
-  else if (akuvolt >= 12.50 && akuvolt < 12.75) {
-    yuzdehesap = (akuvolt - 12.50) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 25, 80, 90);
-  }
-  else if (akuvolt >= 12.75 && akuvolt < 13.00) {
-    yuzdehesap = (akuvolt - 12.75) * 100;
-    akuyuzdesi = map(yuzdehesap, 0, 25, 90, 100);
-  }
-  else if (akuvolt > 13.00) {
-    akuyuzdesi = 100;
+  if ((zaman - akuvrefresh) >= 1) {
+    akuvolt = (vgiris / (R2 / (R1 + R2)));
+    if (akuvolt < 2) {
+      akuvolt = 0;
+    }
+    if (akuvolt < 10.5) {
+      akuyuzdesi = 0;
+    }
+    else if (akuvolt >= 10.5 && akuvolt < 11.51) {
+      yuzdehesap = (akuvolt - 10.5) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 101, 0, 10);
+    }
+    else if (akuvolt >= 11.51 && akuvolt < 11.66) {
+      yuzdehesap = (akuvolt - 11.51) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 15, 10, 20);
+    }
+    else if (akuvolt >= 11.66 && akuvolt < 11.81) {
+      yuzdehesap = (akuvolt - 11.66) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 15, 20, 30);
+    }
+    else if (akuvolt >= 11.81 && akuvolt < 11.95) {
+      yuzdehesap = (akuvolt - 11.81) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 14, 30, 40);
+    }
+    else if (akuvolt >= 11.95 && akuvolt < 12.05) {
+      yuzdehesap = (akuvolt - 11.95) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 10, 40, 50);
+    }
+    else if (akuvolt >= 12.05 && akuvolt < 12.15) {
+      yuzdehesap = (akuvolt - 12.05) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 10, 50, 60);
+    }
+    else if (akuvolt >= 12.15 && akuvolt < 12.30) {
+      yuzdehesap = (akuvolt - 12.15) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 15, 60, 70);
+    }
+    else if (akuvolt >= 12.30 && akuvolt < 12.50) {
+      yuzdehesap = (akuvolt - 12.30) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 20, 70, 80);
+    }
+    else if (akuvolt >= 12.50 && akuvolt < 12.75) {
+      yuzdehesap = (akuvolt - 12.50) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 25, 80, 90);
+    }
+    else if (akuvolt >= 12.75 && akuvolt < 13.00) {
+      yuzdehesap = (akuvolt - 12.75) * 100;
+      akuyuzdesi = map(yuzdehesap, 0, 25, 90, 100);
+    }
+    else if (akuvolt > 13.00) {
+      akuyuzdesi = 100;
+    }
+    akuvrefresh = zaman;
   }
 
   if (akuvolt > akusarjvoltaji && GUCTIPI == 1 && AKUVARMI == 1) {
@@ -399,15 +407,15 @@ void loop()
   }
 
   if ((zaman - zamanprevgucgos) >= 0 < 0.5 && GUCTIPI == 1 && SARJOLUYOR == 1 && AKUVARMI == 1) {
-    Serial.print("vis ac,0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis ac,0");
+    Serial2.write(nextion_array, 3);
   }
 
   if ((zaman - zamanprevgucgos) >= 0.5) {
     zamanprevgucgos = zaman;
     if (GUCTIPI == 1 && SARJOLUYOR == 1 && AKUVARMI == 1) {
-      Serial.print("vis ac,1");
-      Serial.write(nextion_array, 3);
+      Serial2.print("vis ac,1");
+      Serial2.write(nextion_array, 3);
     }
   }
 
@@ -518,177 +526,177 @@ void loop()
   }
 
   nem = dht.readHumidity();
-  Serial.print("n8.txt=");
-  Serial.print("\"");
-  Serial.print(nem);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("n8.txt=");
+  Serial2.print("\"");
+  Serial2.print(nem);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
   sicaklik = dht.readTemperature();
-  Serial.print("t8.txt=");
-  Serial.print("\"");
-  Serial.print(sicaklik);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t8.txt=");
+  Serial2.print("\"");
+  Serial2.print(sicaklik);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t1.txt=");
-  Serial.print("\"");
-  Serial.print(sustdeger);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t1.txt=");
+  Serial2.print("\"");
+  Serial2.print(sustdeger);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t2.txt=");
-  Serial.print("\"");
-  Serial.print(saltdeger);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t2.txt=");
+  Serial2.print("\"");
+  Serial2.print(saltdeger);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t3.txt=");
-  Serial.print("\"");
-  Serial.print(nustdeger);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t3.txt=");
+  Serial2.print("\"");
+  Serial2.print(nustdeger);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t4.txt=");
-  Serial.print("\"");
-  Serial.print(naltdeger);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t4.txt=");
+  Serial2.print("\"");
+  Serial2.print(naltdeger);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t10.txt=");
-  Serial.print("\"");
-  Serial.print(rtc.getDateStr());
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t10.txt=");
+  Serial2.print("\"");
+  Serial2.print(rtc.getDateStr());
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t11.txt=");
-  Serial.print("\"");
-  Serial.print(rtc.getTimeStr());
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t11.txt=");
+  Serial2.print("\"");
+  Serial2.print(rtc.getTimeStr());
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t5.txt=");
-  Serial.print("\"");
-  Serial.print(turntime);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t5.txt=");
+  Serial2.print("\"");
+  Serial2.print(turntime);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("ta1.val=");
-  Serial.print(gun);
-  Serial.write(nextion_array, 3);
-  Serial.print("ta2.val=");
-  Serial.print(ay);
-  Serial.write(nextion_array, 3);
-  Serial.print("ta3.val=");
-  Serial.print(yil);
-  Serial.write(nextion_array, 3);
+  Serial2.print("ta1.val=");
+  Serial2.print(gun);
+  Serial2.write(nextion_array, 3);
+  Serial2.print("ta2.val=");
+  Serial2.print(ay);
+  Serial2.write(nextion_array, 3);
+  Serial2.print("ta3.val=");
+  Serial2.print(yil);
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t13.txt=");
-  Serial.print("\"");
-  Serial.print(GUNSAYACI);
-  Serial.print(".Gun");
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t13.txt=");
+  Serial2.print("\"");
+  Serial2.print(GUNSAYACI);
+  Serial2.print(".Gun");
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t14.txt=");
-  Serial.print("\"");
-  Serial.print(akuvolt);
-  Serial.print("V");
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("t14.txt=");
+  Serial2.print("\"");
+  Serial2.print(akuvolt);
+  Serial2.print("V");
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("t15a.val=");
-  Serial.print(saat);
-  Serial.write(nextion_array, 3);
-  Serial.print("t15b.val=");
-  Serial.print(dakika);
-  Serial.write(nextion_array, 3);
+  Serial2.print("t15a.val=");
+  Serial2.print(saat);
+  Serial2.write(nextion_array, 3);
+  Serial2.print("t15b.val=");
+  Serial2.print(dakika);
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("tyuzde.txt=");
-  Serial.print("\"");
-  Serial.print(akuyuzdesi);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("tyuzde.txt=");
+  Serial2.print("\"");
+  Serial2.print(akuyuzdesi);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("akusarjv.txt=");
-  Serial.print("\"");
-  Serial.print(akusarjvoltaji);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("akusarjv.txt=");
+  Serial2.print("\"");
+  Serial2.print(akusarjvoltaji);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
-  Serial.print("cgun.txt=");
-  Serial.print("\"");
-  Serial.print(CEVIRMEDGUNSAYISI);
-  Serial.print("\"");
-  Serial.write(nextion_array, 3);
+  Serial2.print("cgun.txt=");
+  Serial2.print("\"");
+  Serial2.print(CEVIRMEDGUNSAYISI);
+  Serial2.print("\"");
+  Serial2.write(nextion_array, 3);
 
   if (GUCTIPI == 1 && AKUVARMI == 1) {
-    Serial.print("vis dc,0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis dc,0");
+    Serial2.write(nextion_array, 3);
     if (SARJOLUYOR == 0) {
-      Serial.print("vis ac,1");
-      Serial.write(nextion_array, 3);
+      Serial2.print("vis ac,1");
+      Serial2.write(nextion_array, 3);
     }
   }
   else if (GUCTIPI == 0 && AKUVARMI == 1) {
-    Serial.print("vis dc,1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis dc,1");
+    Serial2.write(nextion_array, 3);
     if (SARJOLUYOR == 0) {
-      Serial.print("vis ac,0");
-      Serial.write(nextion_array, 3);
+      Serial2.print("vis ac,0");
+      Serial2.write(nextion_array, 3);
     }
   }
 
   if (SUSEVIYEGOSTERGESI == 0) {
-    Serial.print("vis p9,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis pic5e,0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis p9,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis pic5e,0");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("vis p9,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis pic5e,1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis p9,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis pic5e,1");
+    Serial2.write(nextion_array, 3);
   }
 
   if (AKUVARMI == 0) {
-    Serial.print("vis obj6e,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis taku,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis p4,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis dc,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis ac,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis t14,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis tyuzde,0");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis bat,0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis obj6e,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis taku,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis p4,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis dc,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis ac,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis t14,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis tyuzde,0");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis bat,0");
+    Serial2.write(nextion_array, 3);
     AKUVARYOK = 1;
   }
   else {
-    Serial.print("vis obj6e,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis taku,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis p4,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis t14,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis tyuzde,1");
-    Serial.write(nextion_array, 3);
-    Serial.print("vis bat,1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("vis obj6e,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis taku,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis p4,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis t14,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis tyuzde,1");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("vis bat,1");
+    Serial2.write(nextion_array, 3);
     if (AKUVARYOK == 1) {
-      Serial.write(nextion_array, 3);
-      Serial.print("vis dc,1");
-      Serial.write(nextion_array, 3);
-      Serial.print("vis ac,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis dc,1");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("vis ac,1");
     }
     AKUVARYOK = 0;
   }
@@ -736,186 +744,186 @@ void loop()
   }
 
   if (akuyuzdesi <= 10) {
-    Serial.print("t14.pco=49152");
-    Serial.write(nextion_array, 3);
-    Serial.print("tyuzde.pco=49152");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t14.pco=49152");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("tyuzde.pco=49152");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("t14.pco=65535");
-    Serial.write(nextion_array, 3);
-    Serial.print("tyuzde.pco=65535");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t14.pco=65535");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("tyuzde.pco=65535");
+    Serial2.write(nextion_array, 3);
   }
 
   if (kanal1 == 1) {
-    Serial.print("t17.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t17.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t17.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t17.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("t17.txt=");
-    Serial.print("\"");
-    Serial.print("KAPALI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t17.pco=63488");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t17.txt=");
+    Serial2.print("\"");
+    Serial2.print("KAPALI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t17.pco=63488");
+    Serial2.write(nextion_array, 3);
   }
 
   if (kanal2 == 1) {
-    Serial.print("t18.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t18.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t18.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t18.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else {
     if (GUNSAYACI < CEVIRMEDGUNSAYISI) {
-      Serial.print("t18.txt=");
-      Serial.print("\"");
-      Serial.print("KAPALI");
-      Serial.print("\"");
-      Serial.write(nextion_array, 3);
-      Serial.print("t18.pco=63488");
-      Serial.write(nextion_array, 3);
+      Serial2.print("t18.txt=");
+      Serial2.print("\"");
+      Serial2.print("KAPALI");
+      Serial2.print("\"");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("t18.pco=63488");
+      Serial2.write(nextion_array, 3);
     }
     if (GUNSAYACI == CEVIRMEDGUNSAYISI) {
-      Serial.print("t18.txt=");
-      Serial.print("\"");
-      Serial.print("D.DISI");
-      Serial.print("\"");
-      Serial.write(nextion_array, 3);
-      Serial.print("t18.pco=64520");
-      Serial.write(nextion_array, 3);
+      Serial2.print("t18.txt=");
+      Serial2.print("\"");
+      Serial2.print("D.DISI");
+      Serial2.print("\"");
+      Serial2.write(nextion_array, 3);
+      Serial2.print("t18.pco=64520");
+      Serial2.write(nextion_array, 3);
     }
   }
 
   if (kanal3 == 1 && GUCTIPI == 1) {
-    Serial.print("t19.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t19.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t19.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t19.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else if (kanal3 == 0 && GUCTIPI == 1) {
-    Serial.print("t19.txt=");
-    Serial.print("\"");
-    Serial.print("KAPALI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t19.pco=63488");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t19.txt=");
+    Serial2.print("\"");
+    Serial2.print("KAPALI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t19.pco=63488");
+    Serial2.write(nextion_array, 3);
   }
   else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesi >= 5) {
-    Serial.print("t19.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t19.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t19.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t19.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesi >= 5) {
-    Serial.print("t19.txt=");
-    Serial.print("\"");
-    Serial.print("KAPALI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t19.pco=63488");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t19.txt=");
+    Serial2.print("\"");
+    Serial2.print("KAPALI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t19.pco=63488");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("t19.txt=");
-    Serial.print("\"");
-    Serial.print("D.DISI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t19.pco=64520");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t19.txt=");
+    Serial2.print("\"");
+    Serial2.print("D.DISI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t19.pco=64520");
+    Serial2.write(nextion_array, 3);
   }
 
   if (kanal4 == 1) {
-    Serial.print("t20.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t20.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t20.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t20.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("t20.txt=");
-    Serial.print("\"");
-    Serial.print("KAPALI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("t20.pco=63488");
-    Serial.write(nextion_array, 3);
+    Serial2.print("t20.txt=");
+    Serial2.print("\"");
+    Serial2.print("KAPALI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("t20.pco=63488");
+    Serial2.write(nextion_array, 3);
   }
 
   if (kanal5 == 1) {
-    Serial.print("taku.txt=");
-    Serial.print("\"");
-    Serial.print("ACIK");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("taku.pco=2016");
-    Serial.write(nextion_array, 3);
+    Serial2.print("taku.txt=");
+    Serial2.print("\"");
+    Serial2.print("ACIK");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("taku.pco=2016");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("taku.txt=");
-    Serial.print("\"");
-    Serial.print("KAPALI");
-    Serial.print("\"");
-    Serial.write(nextion_array, 3);
-    Serial.print("taku.pco=63488");
-    Serial.write(nextion_array, 3);
+    Serial2.print("taku.txt=");
+    Serial2.print("\"");
+    Serial2.print("KAPALI");
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("taku.pco=63488");
+    Serial2.write(nextion_array, 3);
   }
 
   if (s4 > analogref && s3 > analogref && s2 > analogref && s1 > analogref) { //yüzde 100 su seviyesi
-    Serial.print("p9.val=100");
-    Serial.write(nextion_array, 3);
+    Serial2.print("p9.val=100");
+    Serial2.write(nextion_array, 3);
     if (SUSEVIYEBUZZERAKTIF == 1) {
       digitalWrite(BUZZERPIN, LOW);
       SUSEVIYEBUZZERAKTIF = 0;
     }
   }
   else if (s4 < analogref && s3 > analogref && s2 > analogref && s1 > analogref) { //yüzde 75 su seviyesi
-    Serial.print("p9.val=75");
-    Serial.write(nextion_array, 3);
+    Serial2.print("p9.val=75");
+    Serial2.write(nextion_array, 3);
     if (SUSEVIYEBUZZERAKTIF == 1) {
       digitalWrite(BUZZERPIN, LOW);
       SUSEVIYEBUZZERAKTIF = 0;
     }
   }
   else if (s4 < analogref && s3 < analogref && s2 > analogref && s1 > analogref) { //yüzde 50 su seviyesi
-    Serial.print("p9.val=50");
-    Serial.write(nextion_array, 3);
+    Serial2.print("p9.val=50");
+    Serial2.write(nextion_array, 3);
     if (SUSEVIYEBUZZERAKTIF == 1) {
       digitalWrite(BUZZERPIN, LOW);
       SUSEVIYEBUZZERAKTIF = 0;
     }
   }
   else if (s4 < analogref && s3 < analogref && s2 < analogref && s1 > analogref) { // yüzde 25 su seviyesi
-    Serial.print("p9.val=25");
-    Serial.write(nextion_array, 3);
+    Serial2.print("p9.val=25");
+    Serial2.write(nextion_array, 3);
     if (SUSEVIYEBUZZERAKTIF == 1) {
       digitalWrite(BUZZERPIN, LOW);
       SUSEVIYEBUZZERAKTIF = 0;
     }
   }
   else if (s4 < analogref && s3 < analogref && s2 < analogref && s1 < analogref) { //yüzde 0 su seviyesi
-    Serial.print("p9.val=0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("p9.val=0");
+    Serial2.write(nextion_array, 3);
     if (SUSEVIYEBUZZER == 1) {
       digitalWrite(BUZZERPIN, HIGH);
       SUSEVIYEBUZZERAKTIF = 1;
@@ -1166,30 +1174,30 @@ void b29PushCallback(void *ptr)
 {
 
   if (SUSEVIYEGOSTERGESI == 1) {
-    Serial.print("bt1.val=1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt1.val=1");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("bt1.val=0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt1.val=0");
+    Serial2.write(nextion_array, 3);
   }
 
   if (SUSEVIYEBUZZER == 1) {
-    Serial.print("bt2.val=1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt2.val=1");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("bt2.val=0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt2.val=0");
+    Serial2.write(nextion_array, 3);
   }
 
   if (AKUVARMI == 1) {
-    Serial.print("bt3.val=1");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt3.val=1");
+    Serial2.write(nextion_array, 3);
   }
   else {
-    Serial.print("bt3.val=0");
-    Serial.write(nextion_array, 3);
+    Serial2.print("bt3.val=0");
+    Serial2.write(nextion_array, 3);
   }
 }
 
