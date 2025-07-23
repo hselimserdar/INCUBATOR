@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.3*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.4*/
 
 #include "Nextion.h"
 #include "SDL_Arduino_INA3221.h"
@@ -365,7 +365,7 @@ float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
 String pcbsurum = "V3.2";
-String yazilimsurum = "V3.2.3";
+String yazilimsurum = "V3.2.4";
 byte akusarjcurr;
 float setcurrentA;
 float setcurrentMA;
@@ -730,21 +730,8 @@ void loop()
   }
 
   if (SARJOLUYOR == 1) {
-    if (zamanms - pidtiming >= 100) {
-      if (hata > 100) {
-        if (pidpwm < 256) {
-          pidpwm = pidpwm + 1;
-        }
-      }
-      if (hata < -100) {
-        if (pidpwm < 256) {
-          pidpwm = pidpwm - 1;
-        }
-        pidtiming = zamanms;
-      }
-      analogWrite(AKUSARJAKIMI, pidpwm);
+      analogWrite(AKUSARJAKIMI, 3);
     }
-  }
 
   if ((zaman - akuvrefresh) >= 1) {
     akuvolt = (vgiris / (R2 / (R1 + R2)));
@@ -1382,6 +1369,13 @@ void loop()
   else if (c == 1 && t.min == 40 && t.sec == turntime) {
     digitalWrite(CH2, HIGH);
     kanal2 = 0;
+  }
+
+  if (kanal2 == 1) {
+    digitalWrite(CH2, LOW);
+  }
+  else {
+    digitalWrite(CH2, HIGH);
   }
 
   if (t.hour == sayacsaat && t.min == sayacdakika && t.sec == 00) {
