@@ -1,12 +1,10 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.4*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V4.0*/
 
 #include "Nextion.h"
-#include "SDL_Arduino_INA3221.h"
 #include <DHT.h>
 #include <EEPROM.h>
 #include <DS3231.h>
 #include <Wire.h>
-#include <math.h>
 #include <Adafruit_ADS1015.h>
 
 #define DHTTYPE DHT22
@@ -26,15 +24,12 @@
 #define seviye2 A3
 #define seviye3 A4
 #define seviye4 A5
-#define termistor1pin A6
-#define termistor2pin A7
-#define termistor3pin A8
 #define VCC_HATTI 1
 #define AKU_SARJ 2
 #define AKU_DESARJ 3
 
-Adafruit_ADS1115 ads;
-SDL_Arduino_INA3221 ina3221;
+Adafruit_ADS1115 ads(0x48);
+Adafruit_ADS1115 ads2(0x49);
 DHT dht(DHTPIN, DHTTYPE); //n8-nem, t8-sıcaklık
 DS3231 rtc(SDA, SCL);
 Time  t;
@@ -82,6 +77,7 @@ NexButton b25 = NexButton(4, 5, "b25");
 NexButton b26 = NexButton(4, 6, "b26");
 NexButton b27 = NexButton(2, 24, "b27");
 NexButton b28 = NexButton(2, 25, "b28");
+NexButton b29 = NexButton(2, 28, "b29");
 NexButton b30 = NexButton(5, 6, "b30");
 NexButton b31 = NexButton(5, 7, "b31");
 NexButton b32 = NexButton(5, 10, "b32");
@@ -89,8 +85,6 @@ NexButton b33 = NexButton(11, 3, "b33");
 NexButton b34 = NexButton(11, 4, "b34");
 NexButton b35 = NexButton(5, 12, "b35");
 NexButton b36 = NexButton(5, 13, "b36");
-NexButton b37 = NexButton(5, 23, "b37");
-NexButton b38 = NexButton(5, 24, "b38");
 NexPicture pb1 = NexPicture(5, 17, "pb1");
 NexPicture pb2 = NexPicture(5, 18, "pb2");
 NexPicture pb3 = NexPicture(5, 19, "pb3");
@@ -125,15 +119,13 @@ NexButton b25en = NexButton(9, 5, "b25en");
 NexButton b26en = NexButton(9, 6, "b26en");
 NexButton b27en = NexButton(7, 24, "b27en");
 NexButton b28en = NexButton(7, 25, "b28en");
-NexButton b30en = NexButton(10, 6, "b30en");
-NexButton b31en = NexButton(10, 7, "b31en");
+NexButton b30en = NexButton(10, 14, "b30en");
+NexButton b31en = NexButton(10, 11, "b31en");
 NexButton b32en = NexButton(10, 10, "b32en");
 NexButton b33en = NexButton(12, 4, "b33en");
 NexButton b34en = NexButton(12, 3, "b34en");
 NexButton b35en = NexButton(10, 13, "b35en");
 NexButton b36en = NexButton(10, 14, "b36en");
-NexButton b37en = NexButton(10, 23, "b37en");
-NexButton b38en = NexButton(10, 24, "b38en");
 NexPicture pb1en = NexPicture(10, 17, "pb1en");
 NexPicture pb2en = NexPicture(10, 18, "pb2en");
 NexPicture pb3en = NexPicture(10, 19, "pb3en");
@@ -171,6 +163,7 @@ NexTouch * nex_listen_list[] =
   &b26,
   &b27,
   &b28,
+  &b29,
   &b30,
   &b31,
   &b32,
@@ -178,8 +171,6 @@ NexTouch * nex_listen_list[] =
   &b34,
   &b35,
   &b36,
-  &b37,
-  &b38,
   &pb1,
   &pb2,
   &pb3,
@@ -221,8 +212,6 @@ NexTouch * nex_listen_list[] =
   &b34en,
   &b35en,
   &b36en,
-  &b37en,
-  &b38en,
   &pb1en,
   &pb2en,
   &pb3en,
@@ -231,26 +220,6 @@ NexTouch * nex_listen_list[] =
   &pb6en,
   NULL
 };
-
-const int AkuYuzdesiNumReadings = 10;
-int AkuYuzdesiReadings[AkuYuzdesiNumReadings];
-int AkuYuzdesiReadIndex = 0;
-int AkuYuzdesiTotal = 0;
-byte akuyuzdesiort; //Akünün ortalama şarj yüzdesi
-
-const int termistorNumReadings = 5;
-int termistorReadIndex = 0;
-int termistor1Readings[termistorNumReadings];
-int termistor1Total = 0;
-byte termistor1ort;
-
-int termistor2Readings[termistorNumReadings];
-int termistor2Total = 0;
-byte termistor2ort;
-
-int termistor3Readings[termistorNumReadings];
-int termistor3Total = 0;
-byte termistor3ort;
 
 unsigned long zamanms = 0; //Kod başladıktan sonra geçen zaman (ms cinsinden) NOT:MAX 50 GÜN
 unsigned long zaman = 0; //Kod başladıktan sonra geçen zaman (sn cinsinden)
@@ -298,74 +267,26 @@ int s1; //su seviyesi 1
 int s2; //su seviyesi 2
 int s3; //su seviyesi 3
 int s4; //su seviyesi 4
-int fanspeed;
-int fanspeedanalog;
-int termistor1analog;
-int termistor2analog;
-int termistor3analog;
-double Termistor1(int analogOkuma1) {
-
-  double sicaklik1;
-  sicaklik1 = log(((10240000 / analogOkuma1) - 10000));
-  sicaklik1 = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * sicaklik1 * sicaklik1)) * sicaklik1);
-  sicaklik1 = sicaklik1 - 273.15;
-  return sicaklik1;
-}
-double Termistor2(int analogOkuma2) {
-
-  double sicaklik2;
-  sicaklik2 = log(((10240000 / analogOkuma2) - 10000));
-  sicaklik2 = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * sicaklik2 * sicaklik2)) * sicaklik2);
-  sicaklik2 = sicaklik2 - 273.15;
-  return sicaklik2;
-}
-double Termistor3(int analogOkuma3) {
-
-  double sicaklik3;
-  sicaklik3 = log(((10240000 / analogOkuma3) - 10000));
-  sicaklik3 = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * sicaklik3 * sicaklik3)) * sicaklik3);
-  sicaklik3 = sicaklik3 - 273.15;
-  return sicaklik3;
-}
 byte analogref = 200; //su seviyesi ölçümü için analog girişi voltaj referansı
-boolean GUCTIPI; //AC, DC değerini saklayacak olan değişken; 1'de iken AC, 0'da iken DC güç
+boolean GUCTIPI; //AC, DC değerini saklayacak olan değişken. 1'de iken AC, 0'da iken DC güç
 byte SARJOLUYOR = 0; //Akünün şarj durumunu saklayan değişken
 byte SUSEVIYEBUZZERAKTIF = 0;
 byte AKUVARYOK = 0;
-byte AKUVARMI; //Akünün kullanılıp kullanılmayacağını saklayan değişken; 1 ise, AKÜ KULLANILIYOR
+byte AKUVARMI; //Akünün kullanılıp kullanılmayacağını saklayan değişken. 1 ise, AKÜ KULLANILIYOR
 byte SUSEVIYEBUZZER; //Su seviyesi alarmının kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
 byte SUSEVIYEGOSTERGESI; //Su seviyesi göstergesinin kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
-byte fanhizimosfet;
 int CEVIRMEDGUNSAYISI; //Maksimum yumurta çevirme gün sayısı
 unsigned long EkranYenileme1 = 0;
 unsigned long EkranYenileme2 = 0;
 unsigned long EkranYenileme3 = 0;
 unsigned long EkranYenileme4 = 0;
 unsigned long EkranYenileme5 = 0;
-unsigned long sensetiming = 0;
 unsigned long pbswitchdelay = 0;
-int pidtiming = 0;
-int pidpwm = 255;
-int hata = 0;
-int MID;
 char nextion_array[3] = {0xFF, 0xFF, 0xFF};
-char buffer[100] = {0};
-float shuntvoltage1 = 0;
-float busvoltage1 = 0;
-float current_mA1 = 0;
-float loadvoltage1 = 0;
-float shuntvoltage2 = 0;
-float busvoltage2 = 0;
-float current_mA2 = 0;
-float loadvoltage2 = 0;
-float shuntvoltage3 = 0;
-float busvoltage3 = 0;
-float current_mA3 = 0;
-float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
-String pcbsurum = "V3.2";
-String yazilimsurum = "V3.2.4";
+String pcbsurum = "V4.0";
+String yazilimsurum = "V4";
 byte akusarjcurr;
 float setcurrentA;
 float setcurrentMA;
@@ -373,9 +294,10 @@ int millissaniye;
 int millisdakika;
 int millissaat;
 int millisgun;
-float VCCHATAMP;
-float AKUSARJAMP;
-float AKUDESARJAMP;
+float termistor1, termistor2, termistor3;
+float VCCHATAMP; //Ölçülen VCC HATTI AKIMI
+float AKUSARJAMP; //Ölçülen BATARYA ŞARJ AKIMI
+float AKUDESARJAMP; //Ölçülen BATARYA DEŞARJ AKIMI
 
 /**********************************************************************************/
 
@@ -383,17 +305,11 @@ void setup()
 {
   TCCR1B = TCCR1B & 0b11111000 | 0x02;
   pinMode(CH1, OUTPUT);
-  digitalWrite(CH1, LOW);
   pinMode(CH2, OUTPUT);
-  digitalWrite(CH2, LOW);
   pinMode(CH3, OUTPUT);
-  digitalWrite(CH3, LOW);
   pinMode(CH4, OUTPUT);
-  digitalWrite(CH4, LOW);
   pinMode(CH5, OUTPUT);
-  digitalWrite(CH5, LOW);
   pinMode(CH6, OUTPUT);
-  digitalWrite(CH6, LOW);
   pinMode(AKUSARJAKIMI, OUTPUT);
   pinMode(seviye1, INPUT);
   pinMode(seviye2, INPUT);
@@ -410,13 +326,94 @@ void setup()
   Serial2.end();
   Serial2.begin(115200);
   page0.show();
-  pushcallback();
+  b1.attachPop(b1PopCallback, &b1);
+  b2.attachPush(b2PushCallback, &b2);
+  b3.attachPush(b3PushCallback, &b3);
+  b4.attachPush(b4PushCallback, &b4);
+  b5.attachPush(b5PushCallback, &b5);
+  b6.attachPush(b6PushCallback, &b6);
+  b7.attachPush(b7PushCallback, &b7);
+  b8.attachPush(b8PushCallback, &b8);
+  b9.attachPush(b9PushCallback, &b9);
+  b10.attachPush(b10PushCallback, &b10);
+  b11.attachPush(b11PushCallback, &b11);
+  b12.attachPush(b12PushCallback, &b12);
+  b13.attachPush(b13PushCallback, &b13);
+  b14.attachPush(b14PushCallback, &b14);
+  b15.attachPush(b15PushCallback, &b15);
+  b16.attachPush(b16PushCallback, &b16);
+  b17.attachPush(b17PushCallback, &b17);
+  b18.attachPush(b18PushCallback, &b18);
+  b19.attachPush(b19PushCallback, &b19);
+  b20.attachPush(b20PushCallback, &b20);
+  b21.attachPush(b21PushCallback, &b21);
+  b22.attachPush(b22PushCallback, &b22);
+  b23.attachPush(b23PushCallback, &b23);
+  b24.attachPush(b24PushCallback, &b24);
+  b25.attachPush(b25PushCallback, &b25);
+  b26.attachPush(b26PushCallback, &b26);
+  b27.attachPush(b27PushCallback, &b27);
+  b28.attachPush(b28PushCallback, &b28);
+  b30.attachPush(b30PushCallback, &b30);
+  b31.attachPush(b31PushCallback, &b31);
+  b32.attachPush(b32PushCallback, &b32);
+  b33.attachPush(b33PushCallback, &b33);
+  b34.attachPush(b34PushCallback, &b34);
+  b35.attachPush(b35PushCallback, &b35);
+  b36.attachPush(b36PushCallback, &b36);
+  pb1.attachPush(pb1PushCallback, &pb1);
+  pb2.attachPush(pb2PushCallback, &pb2);
+  pb3.attachPush(pb3PushCallback, &pb3);
+  pb4.attachPush(pb4PushCallback, &pb4);
+  pb5.attachPush(pb5PushCallback, &pb5);
+  pb6.attachPush(pb6PushCallback, &pb6);
+  b1en.attachPop(b1enPopCallback, &b1en);
+  b2en.attachPush(b2enPushCallback, &b2en);
+  b3en.attachPush(b3enPushCallback, &b3en);
+  b4en.attachPush(b4enPushCallback, &b4en);
+  b5en.attachPush(b5enPushCallback, &b5en);
+  b6en.attachPush(b6enPushCallback, &b6en);
+  b7en.attachPush(b7enPushCallback, &b7en);
+  b8en.attachPush(b8enPushCallback, &b8en);
+  b9en.attachPush(b9enPushCallback, &b9en);
+  b10en.attachPush(b10enPushCallback, &b10en);
+  b11en.attachPush(b11enPushCallback, &b11en);
+  b12en.attachPush(b12enPushCallback, &b12en);
+  b13en.attachPush(b13enPushCallback, &b13en);
+  b14en.attachPush(b14enPushCallback, &b14en);
+  b15en.attachPush(b15enPushCallback, &b15en);
+  b16en.attachPush(b16enPushCallback, &b16en);
+  b17en.attachPush(b17enPushCallback, &b17en);
+  b18en.attachPush(b18enPushCallback, &b18en);
+  b19en.attachPush(b19enPushCallback, &b19en);
+  b20en.attachPush(b20enPushCallback, &b20en);
+  b21en.attachPush(b21enPushCallback, &b21en);
+  b22en.attachPush(b22enPushCallback, &b22en);
+  b23en.attachPush(b23enPushCallback, &b23en);
+  b24en.attachPush(b24enPushCallback, &b24en);
+  b25en.attachPush(b25enPushCallback, &b25en);
+  b26en.attachPush(b26enPushCallback, &b26en);
+  b27en.attachPush(b27enPushCallback, &b27en);
+  b28en.attachPush(b28enPushCallback, &b28en);
+  b30en.attachPush(b30enPushCallback, &b30en);
+  b31en.attachPush(b31enPushCallback, &b31en);
+  b32en.attachPush(b32enPushCallback, &b32en);
+  b33en.attachPush(b33enPushCallback, &b33en);
+  b34en.attachPush(b34enPushCallback, &b34en);
+  b35en.attachPush(b35enPushCallback, &b35en);
+  b36en.attachPush(b36enPushCallback, &b36en);
+  pb1en.attachPush(pb1enPushCallback, &pb1en);
+  pb2en.attachPush(pb2enPushCallback, &pb2en);
+  pb3en.attachPush(pb3enPushCallback, &pb3en);
+  pb4en.attachPush(pb4enPushCallback, &pb4en);
+  pb5en.attachPush(pb5enPushCallback, &pb5en);
+  pb6en.attachPush(pb6enPushCallback, &pb6en);
   ads.setGain(GAIN_ONE); // 1x gain   +/- 4.096V  1 bit = 0.125mV
+  ads2.setGain(GAIN_ONE); // 1x gain   +/- 4.096V  1 bit = 0.125mV
   dht.begin();
   rtc.begin();
   ads.begin();
-  ina3221.begin();
-  MID = ina3221.getManufID();
+  ads2.begin();
   smin = EEPROM.read(0);
   smax = EEPROM.read(1);
   hmin = EEPROM.read(2);
@@ -432,7 +429,6 @@ void setup()
   akusarjv = EEPROM.read(12);
   LANG = EEPROM.read(13);
   akusarjcurr = EEPROM.read(14);
-  fanspeed = EEPROM.read(15);
   t = rtc.getTime();
   yil = (t.year);
   ay = (t.mon);
@@ -620,20 +616,21 @@ void setup()
     Serial2.print("page MAIN");
     Serial2.write(nextion_array, 3);
   }
-
-  for (int thisReading = 0; thisReading < AkuYuzdesiNumReadings; thisReading++) {
-    AkuYuzdesiReadings[thisReading] = 0;
-  }
   ///////////////////////////////////////////////////////////////////////////////////
   delay(250);
 }
 
 void loop()
 {
-  int16_t adc0;
-  adc0 = ads.readADC_SingleEnded(0);
+  int16_t adc1, adc2, adc3, adc4, adc5, adc6;
+  analogakuvoltaji = ads.readADC_SingleEnded(0);
+  adc1 = ads.readADC_SingleEnded(1);
+  adc2 = ads.readADC_SingleEnded(2);
+  adc3 = ads.readADC_SingleEnded(3);
+  adc4 = ads2.readADC_SingleEnded(0);
+  adc5 = ads2.readADC_SingleEnded(1);
+  adc6 = ads2.readADC_SingleEnded(2);
   nexLoop(nex_listen_list);
-  analogakuvoltaji = adc0;
   GUCTIPI = digitalRead(GERILIMPIN);
   vgiris = (analogakuvoltaji * 0.000125);
   zamanms = millis();
@@ -655,83 +652,8 @@ void loop()
   millissaat = (zaman / 3600) % 24;
   millisgun = (zaman / 3600) / 24;
   akusarjvoltaji = 12 + (akusarjv / 50);
-  hata = current_mA2 - setcurrentMA;
   setcurrentMA = 500 + (akusarjcurr * 10);
   setcurrentA = setcurrentMA / 1000;
-
-  termistor1analog = analogRead(termistor1pin);
-  termistor2analog = analogRead(termistor2pin);
-  termistor3analog = analogRead(termistor3pin);
-
-  double termistor1 = Termistor1(termistor1analog);
-  double termistor2 = Termistor2(termistor2analog);
-  double termistor3 = Termistor3(termistor3analog);
-
-  if ((zamanms - sensetiming) > 1500) {
-    busvoltage1 = ina3221.getBusVoltage_V(VCC_HATTI);
-    shuntvoltage1 = ina3221.getShuntVoltage_mV(VCC_HATTI);
-    current_mA1 = ina3221.getCurrent_mA(VCC_HATTI);
-    loadvoltage1 = busvoltage1 + (shuntvoltage1 / 1000);
-    if (current_mA1 < 0) {
-      current_mA1 = 0;
-    }
-    VCCHATAMP = current_mA1 / 1000;
-
-    busvoltage2 = ina3221.getBusVoltage_V(AKU_SARJ);
-    shuntvoltage2 = ina3221.getShuntVoltage_mV(AKU_SARJ);
-    current_mA2 = ina3221.getCurrent_mA(AKU_SARJ);
-    loadvoltage2 = busvoltage2 + (shuntvoltage2 / 1000);
-    if (current_mA2 < 0) {
-      current_mA2 = 0;
-    }
-    AKUSARJAMP = current_mA2 / 1000;
-
-    busvoltage3 = ina3221.getBusVoltage_V(AKU_DESARJ);
-    shuntvoltage3 = ina3221.getShuntVoltage_mV(AKU_DESARJ);
-    current_mA3 = ina3221.getCurrent_mA(AKU_DESARJ);
-    loadvoltage3 = busvoltage3 + (shuntvoltage3 / 1000);
-    if (current_mA3 < 0) {
-      current_mA3 = 0;
-    }
-    AKUDESARJAMP = current_mA3 / 1000;
-    sensetiming = zamanms;
-  }
-
-  if ((millis() / 1000) % 1 == 0) {
-    AkuYuzdesiTotal = AkuYuzdesiTotal - AkuYuzdesiReadings[AkuYuzdesiReadIndex];
-    AkuYuzdesiReadings[AkuYuzdesiReadIndex] = akuyuzdesi;
-    AkuYuzdesiTotal = AkuYuzdesiTotal + AkuYuzdesiReadings[AkuYuzdesiReadIndex];
-    AkuYuzdesiReadIndex = AkuYuzdesiReadIndex + 1;
-    akuyuzdesiort = AkuYuzdesiTotal / AkuYuzdesiNumReadings;
-
-    if (AkuYuzdesiReadIndex >= AkuYuzdesiNumReadings) {
-      AkuYuzdesiReadIndex = 0;
-    }
-
-    termistor1Total = termistor1Total - termistor1Readings[termistorReadIndex];
-    termistor1Readings[termistorReadIndex] = termistor1;
-    termistor1Total = termistor1Total + termistor1Readings[termistorReadIndex];
-    termistor1ort = termistor1Total / termistorNumReadings;
-
-    termistor2Total = termistor2Total - termistor2Readings[termistorReadIndex];
-    termistor2Readings[termistorReadIndex] = termistor2;
-    termistor2Total = termistor2Total + termistor2Readings[termistorReadIndex];
-    termistor2ort = termistor2Total / termistorNumReadings;
-
-    termistor3Total = termistor3Total - termistor3Readings[termistorReadIndex];
-    termistor3Readings[termistorReadIndex] = termistor3;
-    termistor3Total = termistor3Total + termistor3Readings[termistorReadIndex];
-    termistor3ort = termistor3Total / termistorNumReadings;
-
-    termistorReadIndex = termistorReadIndex + 1;
-    if (termistorReadIndex >= termistorNumReadings) {
-      termistorReadIndex = 0;
-    }
-  }
-
-  if (SARJOLUYOR == 1) {
-      analogWrite(AKUSARJAKIMI, 3);
-    }
 
   if ((zaman - akuvrefresh) >= 1) {
     akuvolt = (vgiris / (R2 / (R1 + R2)));
@@ -787,32 +709,29 @@ void loop()
     akuvrefresh = zaman;
   }
 
-  fanspeedanalog = map(fanspeed, 0, 100, 0, 255);
-  analogWrite(FANHIZI, fanspeedanalog);
-
   if (akuvolt > akusarjvoltaji && GUCTIPI == 1 && AKUVARMI == 1) {
-    digitalWrite (CH6, LOW);
+    digitalWrite (CH6, HIGH);
     SARJOLUYOR = 0;
     kanal5 = 0;
   }
 
   if (akuvolt < 12.5 && akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, HIGH);
+    digitalWrite (CH6, LOW);
     SARJOLUYOR = 1;
     kanal5 = 1;
   }
 
-  if (GUCTIPI == 0 && akuyuzdesiort >= 5 && AKUVARMI == 1 && kanal3 == 1) {
-    digitalWrite(CH5, HIGH);
+  if (GUCTIPI == 0 && akuyuzdesi >= 5 && AKUVARMI == 1 && kanal3 == 1) {
+    digitalWrite(CH5, LOW);
   }
   else {
-    digitalWrite(CH5, LOW);
+    digitalWrite(CH5, HIGH);
   }
 
   if (GUCTIPI == 0) {
     SARJOLUYOR = 0;
     kanal5 = 0;
-    digitalWrite(CH6, LOW);
+    digitalWrite(CH6, HIGH);
   }
 
   if ((zaman - zamanprevbuz) >= 10 < 10.5 && GUCTIPI == 0 && AKUVARMI == 1) {
@@ -1060,19 +979,19 @@ void loop()
     Serial2.write(nextion_array, 3);
     Serial2.print("cputemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor1ort);
+    Serial2.print(termistor1);
     Serial2.print("°C");   //°C
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("psutemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor3ort);
+    Serial2.print(termistor3);
     Serial2.print("°C");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("regtemp.txt=");
     Serial2.print("\"");
-    Serial2.print(termistor2ort);
+    Serial2.print(termistor2);
     Serial2.print("°C");
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
@@ -1115,11 +1034,6 @@ void loop()
     Serial2.print("t4.txt=");
     Serial2.print("\"");
     Serial2.print(naltdeger);
-    Serial2.print("\"");
-    Serial2.write(nextion_array, 3);
-    Serial2.print("fanspeed.txt=");
-    Serial2.print("\"");
-    Serial2.print(fanspeed);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     EkranYenileme2 = zamanms;
@@ -1200,7 +1114,7 @@ void loop()
     Serial2.write(nextion_array, 3);
     Serial2.print("tyuzde.txt=");
     Serial2.print("\"");
-    Serial2.print(akuyuzdesiort);
+    Serial2.print(akuyuzdesi);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     Serial2.print("akusarjv.txt=");
@@ -1276,7 +1190,7 @@ void loop()
       Serial2.write(nextion_array, 3);
     }
 
-    if (akuyuzdesiort <= 10) {
+    if (akuyuzdesi <= 10) {
       Serial2.print("t14.pco=49152");
       Serial2.write(nextion_array, 3);
       Serial2.print("tyuzde.pco=49152");
@@ -1345,20 +1259,20 @@ void loop()
   }
 
   if (nem <= naltdeger) {
-    digitalWrite(CH4, HIGH);
+    digitalWrite(CH4, LOW);
     kanal4 = 1;
   }
   else if (nem >= nustdeger) {
-    digitalWrite(CH4, LOW);
+    digitalWrite(CH4, HIGH);
     kanal4 = 0;
   }
 
   if (nem <= nalarm) {
-    digitalWrite(CH1, LOW);
+    digitalWrite(CH1, HIGH);
     kanal1 = 0;
   }
   else if (nem >= nustdeger) {
-    digitalWrite(CH1, HIGH);
+    digitalWrite(CH1, LOW);
     kanal1 = 1;
   }
 
@@ -1369,13 +1283,6 @@ void loop()
   else if (c == 1 && t.min == 40 && t.sec == turntime) {
     digitalWrite(CH2, HIGH);
     kanal2 = 0;
-  }
-
-  if (kanal2 == 1) {
-    digitalWrite(CH2, LOW);
-  }
-  else {
-    digitalWrite(CH2, HIGH);
   }
 
   if (t.hour == sayacsaat && t.min == sayacdakika && t.sec == 00) {
@@ -1453,7 +1360,7 @@ void loop()
       Serial2.print("t19.pco=63488");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
+    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesi >= 5) {
       Serial2.print("t19.txt=");
       Serial2.print("\"");
       Serial2.print("ACIK");
@@ -1462,7 +1369,7 @@ void loop()
       Serial2.print("t19.pco=2016");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
+    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesi >= 5) {
       Serial2.print("t19.txt=");
       Serial2.print("\"");
       Serial2.print("KAPALI");
@@ -1586,7 +1493,7 @@ void loop()
       Serial2.print("t19en.pco=63488");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
+    else if (kanal3 == 1 && GUCTIPI == 0 && akuyuzdesi >= 5) {
       Serial2.print("t19en.txt=");
       Serial2.print("\"");
       Serial2.print("ON");
@@ -1595,7 +1502,7 @@ void loop()
       Serial2.print("t19en.pco=2016");
       Serial2.write(nextion_array, 3);
     }
-    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesiort >= 5) {
+    else if (kanal3 == 0 && GUCTIPI == 0 && akuyuzdesi >= 5) {
       Serial2.print("t19en.txt=");
       Serial2.print("\"");
       Serial2.print("OFF");
@@ -1956,7 +1863,7 @@ void b31PushCallback(void *ptr)
 void b32PushCallback(void *ptr)
 {
   if (akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, HIGH);
+    digitalWrite (CH6, LOW);
     SARJOLUYOR = 1;
     kanal5 = 1;
     page1.show();
@@ -1995,24 +1902,6 @@ void b36PushCallback(void *ptr)
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
-}
-
-void b37PushCallback(void *ptr)
-{
-  fanspeed = fanspeed + 5;
-  if (fanspeed > 100) {
-    fanspeed = 0;
-  }
-  EEPROM.write(15, fanspeed);
-}
-
-void b38PushCallback(void *ptr)
-{
-  fanspeed = fanspeed - 5;
-  if (fanspeed < 0) {
-    fanspeed = 100;
-  }
-  EEPROM.write(15, fanspeed);
 }
 
 void pb1PushCallback(void *ptr)
@@ -2331,7 +2220,7 @@ void b31enPushCallback(void *ptr)
 void b32enPushCallback(void *ptr)
 {
   if (akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, HIGH);
+    digitalWrite (CH6, LOW);
     SARJOLUYOR = 1;
     kanal5 = 1;
     page6.show();
@@ -2370,24 +2259,6 @@ void b36enPushCallback(void *ptr)
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
-}
-
-void b37enPushCallback(void *ptr)
-{
-  fanspeed = fanspeed + 5;
-  if (fanspeed > 100) {
-    fanspeed = 0;
-  }
-  EEPROM.write(15, fanspeed);
-}
-
-void b38enPushCallback(void *ptr)
-{
-  fanspeed = fanspeed - 5;
-  if (fanspeed < 0) {
-    fanspeed = 100;
-  }
-  EEPROM.write(15, fanspeed);
 }
 
 void pb1enPushCallback(void *ptr)
@@ -2451,92 +2322,3 @@ void pb6enPushCallback(void *ptr)
 }
 
 /**********************************************************************************/
-
-void pushcallback() {
-  b1.attachPop(b1PopCallback, &b1);
-  b2.attachPush(b2PushCallback, &b2);
-  b3.attachPush(b3PushCallback, &b3);
-  b4.attachPush(b4PushCallback, &b4);
-  b5.attachPush(b5PushCallback, &b5);
-  b6.attachPush(b6PushCallback, &b6);
-  b7.attachPush(b7PushCallback, &b7);
-  b8.attachPush(b8PushCallback, &b8);
-  b9.attachPush(b9PushCallback, &b9);
-  b10.attachPush(b10PushCallback, &b10);
-  b11.attachPush(b11PushCallback, &b11);
-  b12.attachPush(b12PushCallback, &b12);
-  b13.attachPush(b13PushCallback, &b13);
-  b14.attachPush(b14PushCallback, &b14);
-  b15.attachPush(b15PushCallback, &b15);
-  b16.attachPush(b16PushCallback, &b16);
-  b17.attachPush(b17PushCallback, &b17);
-  b18.attachPush(b18PushCallback, &b18);
-  b19.attachPush(b19PushCallback, &b19);
-  b20.attachPush(b20PushCallback, &b20);
-  b21.attachPush(b21PushCallback, &b21);
-  b22.attachPush(b22PushCallback, &b22);
-  b23.attachPush(b23PushCallback, &b23);
-  b24.attachPush(b24PushCallback, &b24);
-  b25.attachPush(b25PushCallback, &b25);
-  b26.attachPush(b26PushCallback, &b26);
-  b27.attachPush(b27PushCallback, &b27);
-  b28.attachPush(b28PushCallback, &b28);
-  b30.attachPush(b30PushCallback, &b30);
-  b31.attachPush(b31PushCallback, &b31);
-  b32.attachPush(b32PushCallback, &b32);
-  b33.attachPush(b33PushCallback, &b33);
-  b34.attachPush(b34PushCallback, &b34);
-  b35.attachPush(b35PushCallback, &b35);
-  b36.attachPush(b36PushCallback, &b36);
-  b37.attachPush(b37PushCallback, &b37);
-  b38.attachPush(b38PushCallback, &b38);
-  pb1.attachPush(pb1PushCallback, &pb1);
-  pb2.attachPush(pb2PushCallback, &pb2);
-  pb3.attachPush(pb3PushCallback, &pb3);
-  pb4.attachPush(pb4PushCallback, &pb4);
-  pb5.attachPush(pb5PushCallback, &pb5);
-  pb6.attachPush(pb6PushCallback, &pb6);
-  b1en.attachPop(b1enPopCallback, &b1en);
-  b2en.attachPush(b2enPushCallback, &b2en);
-  b3en.attachPush(b3enPushCallback, &b3en);
-  b4en.attachPush(b4enPushCallback, &b4en);
-  b5en.attachPush(b5enPushCallback, &b5en);
-  b6en.attachPush(b6enPushCallback, &b6en);
-  b7en.attachPush(b7enPushCallback, &b7en);
-  b8en.attachPush(b8enPushCallback, &b8en);
-  b9en.attachPush(b9enPushCallback, &b9en);
-  b10en.attachPush(b10enPushCallback, &b10en);
-  b11en.attachPush(b11enPushCallback, &b11en);
-  b12en.attachPush(b12enPushCallback, &b12en);
-  b13en.attachPush(b13enPushCallback, &b13en);
-  b14en.attachPush(b14enPushCallback, &b14en);
-  b15en.attachPush(b15enPushCallback, &b15en);
-  b16en.attachPush(b16enPushCallback, &b16en);
-  b17en.attachPush(b17enPushCallback, &b17en);
-  b18en.attachPush(b18enPushCallback, &b18en);
-  b19en.attachPush(b19enPushCallback, &b19en);
-  b20en.attachPush(b20enPushCallback, &b20en);
-  b21en.attachPush(b21enPushCallback, &b21en);
-  b22en.attachPush(b22enPushCallback, &b22en);
-  b23en.attachPush(b23enPushCallback, &b23en);
-  b24en.attachPush(b24enPushCallback, &b24en);
-  b25en.attachPush(b25enPushCallback, &b25en);
-  b26en.attachPush(b26enPushCallback, &b26en);
-  b27en.attachPush(b27enPushCallback, &b27en);
-  b28en.attachPush(b28enPushCallback, &b28en);
-  b30en.attachPush(b30enPushCallback, &b30en);
-  b31en.attachPush(b31enPushCallback, &b31en);
-  b32en.attachPush(b32enPushCallback, &b32en);
-  b33en.attachPush(b33enPushCallback, &b33en);
-  b34en.attachPush(b34enPushCallback, &b34en);
-  b35en.attachPush(b35enPushCallback, &b35en);
-  b36en.attachPush(b36enPushCallback, &b36en);
-  b37en.attachPush(b37enPushCallback, &b37en);
-  b38en.attachPush(b38enPushCallback, &b38en);
-  pb1en.attachPush(pb1enPushCallback, &pb1en);
-  pb2en.attachPush(pb2enPushCallback, &pb2en);
-  pb3en.attachPush(pb3enPushCallback, &pb3en);
-  pb4en.attachPush(pb4enPushCallback, &pb4en);
-  pb5en.attachPush(pb5enPushCallback, &pb5en);
-  pb6en.attachPush(pb6enPushCallback, &pb6en);
-}
