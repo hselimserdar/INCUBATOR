@@ -1,4 +1,4 @@
-/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.1.6*/
+/*H.Selim Serdar Kuluçka Makinesi Projesi Program Sürüm V3.2.2*/
 
 #include "Nextion.h"
 #include "SDL_Arduino_INA3221.h"
@@ -82,7 +82,6 @@ NexButton b25 = NexButton(4, 5, "b25");
 NexButton b26 = NexButton(4, 6, "b26");
 NexButton b27 = NexButton(2, 24, "b27");
 NexButton b28 = NexButton(2, 25, "b28");
-NexButton b29 = NexButton(2, 28, "b29");
 NexButton b30 = NexButton(5, 6, "b30");
 NexButton b31 = NexButton(5, 7, "b31");
 NexButton b32 = NexButton(5, 10, "b32");
@@ -90,6 +89,8 @@ NexButton b33 = NexButton(11, 3, "b33");
 NexButton b34 = NexButton(11, 4, "b34");
 NexButton b35 = NexButton(5, 12, "b35");
 NexButton b36 = NexButton(5, 13, "b36");
+NexButton b37 = NexButton(5, 23, "b37");
+NexButton b38 = NexButton(5, 24, "b38");
 NexPicture pb1 = NexPicture(5, 17, "pb1");
 NexPicture pb2 = NexPicture(5, 18, "pb2");
 NexPicture pb3 = NexPicture(5, 19, "pb3");
@@ -124,13 +125,15 @@ NexButton b25en = NexButton(9, 5, "b25en");
 NexButton b26en = NexButton(9, 6, "b26en");
 NexButton b27en = NexButton(7, 24, "b27en");
 NexButton b28en = NexButton(7, 25, "b28en");
-NexButton b30en = NexButton(10, 14, "b30en");
-NexButton b31en = NexButton(10, 11, "b31en");
+NexButton b30en = NexButton(10, 6, "b30en");
+NexButton b31en = NexButton(10, 7, "b31en");
 NexButton b32en = NexButton(10, 10, "b32en");
 NexButton b33en = NexButton(12, 4, "b33en");
 NexButton b34en = NexButton(12, 3, "b34en");
 NexButton b35en = NexButton(10, 13, "b35en");
 NexButton b36en = NexButton(10, 14, "b36en");
+NexButton b37en = NexButton(10, 23, "b37en");
+NexButton b38en = NexButton(10, 24, "b38en");
 NexPicture pb1en = NexPicture(10, 17, "pb1en");
 NexPicture pb2en = NexPicture(10, 18, "pb2en");
 NexPicture pb3en = NexPicture(10, 19, "pb3en");
@@ -168,7 +171,6 @@ NexTouch * nex_listen_list[] =
   &b26,
   &b27,
   &b28,
-  &b29,
   &b30,
   &b31,
   &b32,
@@ -176,6 +178,8 @@ NexTouch * nex_listen_list[] =
   &b34,
   &b35,
   &b36,
+  &b37,
+  &b38,
   &pb1,
   &pb2,
   &pb3,
@@ -217,6 +221,8 @@ NexTouch * nex_listen_list[] =
   &b34en,
   &b35en,
   &b36en,
+  &b37en,
+  &b38en,
   &pb1en,
   &pb2en,
   &pb3en,
@@ -292,6 +298,7 @@ int s1; //su seviyesi 1
 int s2; //su seviyesi 2
 int s3; //su seviyesi 3
 int s4; //su seviyesi 4
+int fanspeed;
 int termistor1analog;
 int termistor2analog;
 int termistor3analog;
@@ -327,6 +334,7 @@ byte AKUVARYOK = 0;
 byte AKUVARMI; //Akünün kullanılıp kullanılmayacağını saklayan değişken; 1 ise, AKÜ KULLANILIYOR
 byte SUSEVIYEBUZZER; //Su seviyesi alarmının kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
 byte SUSEVIYEGOSTERGESI; //Su seviyesi göstergesinin kullanılıp kullanılmayacağını saklayan değişken; 1 ise kullanılıyor
+byte fanhizimosfet;
 int CEVIRMEDGUNSAYISI; //Maksimum yumurta çevirme gün sayısı
 unsigned long EkranYenileme1 = 0;
 unsigned long EkranYenileme2 = 0;
@@ -356,7 +364,7 @@ float loadvoltage3 = 0;
 int ordinal;
 String ordinalnumber;
 String pcbsurum = "V3.2";
-String yazilimsurum = "V3.1.6";
+String yazilimsurum = "V3.2.2";
 byte akusarjcurr;
 float setcurrentA;
 float setcurrentMA;
@@ -374,11 +382,17 @@ void setup()
 {
   TCCR1B = TCCR1B & 0b11111000 | 0x02;
   pinMode(CH1, OUTPUT);
+  digitalWrite(CH1, LOW);
   pinMode(CH2, OUTPUT);
+  digitalWrite(CH2, LOW);
   pinMode(CH3, OUTPUT);
+  digitalWrite(CH3, LOW);
   pinMode(CH4, OUTPUT);
+  digitalWrite(CH4, LOW);
   pinMode(CH5, OUTPUT);
+  digitalWrite(CH5, LOW);
   pinMode(CH6, OUTPUT);
+  digitalWrite(CH6, LOW);
   pinMode(AKUSARJAKIMI, OUTPUT);
   pinMode(seviye1, INPUT);
   pinMode(seviye2, INPUT);
@@ -417,6 +431,7 @@ void setup()
   akusarjv = EEPROM.read(12);
   LANG = EEPROM.read(13);
   akusarjcurr = EEPROM.read(14);
+  fanspeed = EEPROM.read(15);
   t = rtc.getTime();
   yil = (t.year);
   ay = (t.mon);
@@ -784,14 +799,16 @@ void loop()
     akuvrefresh = zaman;
   }
 
+  analogWrite(FANHIZI, fanspeed);
+
   if (akuvolt > akusarjvoltaji && GUCTIPI == 1 && AKUVARMI == 1) {
-    digitalWrite (CH6, HIGH);
+    digitalWrite (CH6, LOW);
     SARJOLUYOR = 0;
     kanal5 = 0;
   }
 
   if (akuvolt < 12.5 && akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, LOW);
+    digitalWrite (CH6, HIGH);
     SARJOLUYOR = 1;
     kanal5 = 1;
   }
@@ -806,7 +823,7 @@ void loop()
   if (GUCTIPI == 0) {
     SARJOLUYOR = 0;
     kanal5 = 0;
-    digitalWrite(CH6, HIGH);
+    digitalWrite(CH6, LOW);
   }
 
   if ((zaman - zamanprevbuz) >= 10 < 10.5 && GUCTIPI == 0 && AKUVARMI == 1) {
@@ -1109,6 +1126,11 @@ void loop()
     Serial2.print("t4.txt=");
     Serial2.print("\"");
     Serial2.print(naltdeger);
+    Serial2.print("\"");
+    Serial2.write(nextion_array, 3);
+    Serial2.print("fanspeed.txt=");
+    Serial2.print("\"");
+    Serial2.print(fanspeed);
     Serial2.print("\"");
     Serial2.write(nextion_array, 3);
     EkranYenileme2 = zamanms;
@@ -1938,7 +1960,7 @@ void b31PushCallback(void *ptr)
 void b32PushCallback(void *ptr)
 {
   if (akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, LOW);
+    digitalWrite (CH6, HIGH);
     SARJOLUYOR = 1;
     kanal5 = 1;
     page1.show();
@@ -1977,6 +1999,24 @@ void b36PushCallback(void *ptr)
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
+}
+
+void b37PushCallback(void *ptr)
+{
+  fanspeed = fanspeed + 5;
+  if (fanspeed > 100) {
+    fanspeed = 0;
+  }
+  EEPROM.write(15, fanspeed);
+}
+
+void b38PushCallback(void *ptr)
+{
+  fanspeed = fanspeed - 5;
+  if (fanspeed < 0) {
+    fanspeed = 100;
+  }
+  EEPROM.write(15, fanspeed);
 }
 
 void pb1PushCallback(void *ptr)
@@ -2295,7 +2335,7 @@ void b31enPushCallback(void *ptr)
 void b32enPushCallback(void *ptr)
 {
   if (akuvolt > 5 && AKUVARMI == 1 && GUCTIPI == 1) {
-    digitalWrite (CH6, LOW);
+    digitalWrite (CH6, HIGH);
     SARJOLUYOR = 1;
     kanal5 = 1;
     page6.show();
@@ -2334,6 +2374,24 @@ void b36enPushCallback(void *ptr)
     akusarjcurr = 200;
   }
   EEPROM.write(14, akusarjcurr);
+}
+
+void b37enPushCallback(void *ptr)
+{
+  fanspeed = fanspeed + 5;
+  if (fanspeed > 100) {
+    fanspeed = 0;
+  }
+  EEPROM.write(15, fanspeed);
+}
+
+void b38enPushCallback(void *ptr)
+{
+  fanspeed = fanspeed - 5;
+  if (fanspeed < 0) {
+    fanspeed = 100;
+  }
+  EEPROM.write(15, fanspeed);
 }
 
 void pb1enPushCallback(void *ptr)
@@ -2434,6 +2492,8 @@ void pushcallback() {
   b34.attachPush(b34PushCallback, &b34);
   b35.attachPush(b35PushCallback, &b35);
   b36.attachPush(b36PushCallback, &b36);
+  b37.attachPush(b37PushCallback, &b37);
+  b38.attachPush(b38PushCallback, &b38);
   pb1.attachPush(pb1PushCallback, &pb1);
   pb2.attachPush(pb2PushCallback, &pb2);
   pb3.attachPush(pb3PushCallback, &pb3);
@@ -2475,6 +2535,8 @@ void pushcallback() {
   b34en.attachPush(b34enPushCallback, &b34en);
   b35en.attachPush(b35enPushCallback, &b35en);
   b36en.attachPush(b36enPushCallback, &b36en);
+  b37en.attachPush(b37enPushCallback, &b37en);
+  b38en.attachPush(b38enPushCallback, &b38en);
   pb1en.attachPush(pb1enPushCallback, &pb1en);
   pb2en.attachPush(pb2enPushCallback, &pb2en);
   pb3en.attachPush(pb3enPushCallback, &pb3en);
