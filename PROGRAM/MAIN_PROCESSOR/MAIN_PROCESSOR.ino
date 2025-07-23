@@ -25,7 +25,7 @@ int processorReset = 0;  //Set 1 to reset processor
 //WRITE THE CODES FOR ALL THE INPUTS AND OUTPUTS
 
 // ---------------------------------------------------------------------------
-// Task that runs serialComm() nonstop on Core 0
+// Task that runs serialComm() nonstop on Core 0 - THE PROBLEM IS WHEN THE ESP IS RUNNING ON ADAPTER, IT RUNS SLOWLY (MAYBE DUE TO NOISE ON THE POWER LINES)
 // ---------------------------------------------------------------------------
 static void serialCommTask(void *pvParameters) {
   (void)pvParameters;
